@@ -20,10 +20,10 @@ The LLM is responsible for synthesis and phrasing, not for introducing unsupport
 The architecture must expose a clear retrieval step before answer generation.
 This separation improves debuggability, evaluation, and hallucination control.
 
-## ADR-005: Use A Vector Store Compatible With The Example Or Simpler To Operate
+## ADR-005: Use FAISS As The Phase 1 Vector Store
 
-The implementation should remain compatible with the pattern shown in `example/TallerLCH` or adopt a simpler vector backend if it improves demo reliability.
-The documentation should not depend on a more complex infrastructure choice than needed for the phase.
+`FAISS` is the default vector store for the current delivery.
+It is a pragmatic choice for local development and course demos because it keeps the retrieval layer simple and avoids unnecessary infrastructure overhead.
 
 ## ADR-006: Support OpenAI And HuggingFace-Oriented Providers
 

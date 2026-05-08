@@ -33,9 +33,10 @@ Provide grounded answers over a bounded document corpus using `LangChain`, embed
 
 ## Vector Store
 
+- `FAISS` is the assumed vector store for phase 1
 - the vector backend must work with the `LangChain` pipeline
-- compatibility with the example's OpenSearch pattern is acceptable
-- a simpler backend is also acceptable if it improves local reliability and demo readiness
+- the main reason for using `FAISS` is local simplicity, low setup cost, and stable demo behavior
+- other vector backends may be considered later, but they are not the current assumption
 
 ## Retrieval Defaults
 

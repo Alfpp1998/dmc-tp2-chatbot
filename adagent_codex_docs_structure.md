@@ -8,7 +8,7 @@ docs/
 │
 ├── .agents/
 │   ├── skills/                      ← skills reutilizables del equipo
-│   │   ├── query-duckdb/
+│   │   ├── document-indexing/
 │   │   │   └── SKILL.md
 │   │   ├── rag-retrieve/
 │   │   │   └── SKILL.md
