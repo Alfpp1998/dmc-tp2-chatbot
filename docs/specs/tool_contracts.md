@@ -2,23 +2,24 @@
 
 ## Principles
 
-- all tools are read-only in phase 1
+- all phase 1 tools support a `LangChain + RAG` workflow
 - tool outputs must be deterministic and JSON-serializable
+- source metadata must be preserved where relevant
 - errors must be explicit and machine-readable
 
-## `get_ctr_by_channel`
+## `load_documents`
 
 ### Purpose
 
-Return CTR grouped by channel with optional filters.
+Load supported source files into normalized document objects.
 
 ### Input
 
 ```json
 {
-  "date_range": "optional string",
-  "segment": "optional string",
-  "campaign": "optional string"
+  "input_path": "./docs-source",
+  "glob_pattern": "**/*.pdf",
+  "loader_type": "pdf_directory"
 }
 ```
 
@@ -26,40 +27,62 @@ Return CTR grouped by channel with optional filters.
 
 ```json
 {
-  "metric": "ctr",
-  "group_by": "channel",
-  "filters": {
-    "date_range": "q1_2026",
-    "segment": null,
-    "campaign": null
-  },
-  "rows": [
+  "documents_loaded": 3,
+  "loader_type": "pdf_directory",
+  "sources": [
     {
-      "channel": "instagram",
-      "ctr": 0.0412
+      "document_id": "doc-001",
+      "source_path": "pdfs/report.pdf",
+      "title": "report.pdf"
     }
-  ],
-  "summary": {
-    "best_channel": "instagram",
-    "best_value": 0.0412
+  ]
+}
+```
+
+## `split_documents`
+
+### Purpose
+
+Split loaded documents into retrieval-ready chunks.
+
+### Input
+
+```json
+{
+  "chunk_size": 800,
+  "chunk_overlap": 100,
+  "strategy": "recursive_character"
+}
+```
+
+### Output
+
+```json
+{
+  "documents_processed": 3,
+  "chunks_created": 42,
+  "chunking": {
+    "chunk_size": 800,
+    "chunk_overlap": 100,
+    "strategy": "recursive_character"
   }
 }
 ```
 
-## `get_cpc_by_campaign`
+## `build_vector_index`
 
 ### Purpose
 
-Return CPC values for one or more campaigns.
+Embed document chunks and store them in a searchable vector index.
 
 ### Input
 
 ```json
 {
-  "campaign": "optional string",
-  "channel": "optional string",
-  "segment": "optional string",
-  "date_range": "optional string"
+  "embedding_provider": "openai",
+  "embedding_model": "text-embedding-3-small",
+  "vector_backend": "opensearch",
+  "index_name": "phase1_chatbot_index"
 }
 ```
 
@@ -67,37 +90,30 @@ Return CPC values for one or more campaigns.
 
 ```json
 {
-  "metric": "cpc",
-  "group_by": "campaign",
+  "index_name": "phase1_chatbot_index",
+  "vector_backend": "opensearch",
+  "embedding_provider": "openai",
+  "embedding_model": "text-embedding-3-small",
+  "chunks_indexed": 42,
+  "status": "ready"
+}
+```
+
+## `retrieve_context`
+
+### Purpose
+
+Return the most relevant document chunks for a query.
+
+### Input
+
+```json
+{
+  "query": "What is the main conclusion of the document?",
+  "top_k": 4,
   "filters": {
-    "campaign": null,
-    "channel": "search",
-    "segment": null,
-    "date_range": null
-  },
-  "rows": [
-    {
-      "campaign": "brand_search_april",
-      "cpc": 1.42
-    }
-  ]
-}
-```
-
-## `get_top_segments`
-
-### Purpose
-
-Return top-performing segments for a supported metric.
-
-### Input
-
-```json
-{
-  "metric": "ctr",
-  "channel": "optional string",
-  "date_range": "optional string",
-  "limit": 5
+    "document_id": null
+  }
 }
 ```
 
@@ -105,64 +121,43 @@ Return top-performing segments for a supported metric.
 
 ```json
 {
-  "metric": "ctr",
-  "group_by": "segment",
-  "limit": 5,
-  "rows": [
-    {
-      "segment": "returning_users",
-      "ctr": 0.0531
-    }
-  ]
-}
-```
-
-## `retrieve_knowledge_context`
-
-### Purpose
-
-Return top document passages relevant to a user question.
-
-### Input
-
-```json
-{
-  "query": "What is ROAS?",
-  "top_k": 4
-}
-```
-
-### Output
-
-```json
-{
-  "query": "What is ROAS?",
+  "query": "What is the main conclusion of the document?",
   "top_k": 4,
   "results": [
     {
-      "document_id": "marketing_glossary",
-      "document_name": "marketing_glossary.md",
-      "chunk_id": "marketing_glossary-003",
-      "score": 0.89,
-      "text": "ROAS measures revenue generated per unit of ad spend."
+      "document_id": "doc-001",
+      "document_name": "report.pdf",
+      "chunk_id": "doc-001-chunk-003",
+      "score": 0.87,
+      "text": "The report concludes that...",
+      "metadata": {
+        "page": 4,
+        "source_path": "pdfs/report.pdf"
+      }
     }
   ]
 }
 ```
 
-## `generate_campaign_brief_context`
+## `answer_with_rag`
 
 ### Purpose
 
-Build the bounded context package for brief generation.
+Generate a grounded answer from a user query and retrieved context.
 
 ### Input
 
 ```json
 {
-  "goal": "Improve CTR for Gen Z on Instagram",
-  "analytics_result": "optional object",
-  "retrieved_context": "optional object"
+  "query": "What is the main conclusion of the document?",
+  "retrieved_context": [
+    {
+      "document_name": "report.pdf",
+      "chunk_id": "doc-001-chunk-003",
+      "text": "The report concludes that..."
+    }
+  ],
+  "response_mode": "grounded_answer_with_sources"
 }
 ```
 
@@ -170,16 +165,16 @@ Build the bounded context package for brief generation.
 
 ```json
 {
-  "goal": "Improve CTR for Gen Z on Instagram",
-  "constraints": [
-    "Use only retrieved context and analytics facts",
-    "State assumptions explicitly"
+  "answer": "The main conclusion is that...",
+  "grounded": true,
+  "sources": [
+    {
+      "document_name": "report.pdf",
+      "chunk_id": "doc-001-chunk-003"
+    }
   ],
-  "context_bundle": {
-    "analytics_summary": "Instagram CTR is below benchmark for Gen Z.",
-    "retrieved_snippets": [
-      "Campaign briefs should include audience, message, channel, KPI, and test idea."
-    ]
+  "notes": {
+    "insufficient_context": false
   }
 }
 ```
@@ -189,10 +184,10 @@ Build the bounded context package for brief generation.
 ```json
 {
   "error": {
-    "code": "missing_required_slot",
-    "message": "A supported metric is required.",
+    "code": "missing_required_input",
+    "message": "The query field is required.",
     "details": {
-      "missing": ["metric"]
+      "missing": ["query"]
     }
   }
 }

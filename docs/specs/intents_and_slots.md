@@ -1,113 +1,73 @@
-# Intents And Slots Contract
+# Interaction Intents And Conversation Patterns
 
-## Canonical Intents
+## Purpose
 
-### `ask_metric_definition`
+This file does not define Rasa intents.
+It defines the interaction types the phase 1 chatbot must handle in a document-grounded setting.
 
-User asks what a metric means or how it is calculated.
+## Canonical Interaction Types
 
-Examples:
+### `factual_question_from_docs`
 
-- What is CTR?
-- Explain CPC
-- What does ROAS mean?
-
-### `ask_ctr_by_channel`
-
-User asks for CTR grouped or compared by channel.
+The user asks for a direct answer supported by the indexed documents.
 
 Examples:
 
-- Show CTR by channel
-- Which channel has the highest CTR?
-- Compare CTR across channels
+- What does this document say about climate change?
+- Who is the intended audience of this report?
+- What is the main conclusion of the paper?
 
-### `ask_cpc_by_campaign`
+### `summary_request`
 
-User asks for CPC for one or more campaigns.
-
-Examples:
-
-- Show CPC for campaign A
-- Compare campaign CPCs
-
-### `ask_top_segment`
-
-User asks which segment performs best according to a metric.
+The user asks for a concise summary of one document or a retrieved theme.
 
 Examples:
 
-- Which segment performs best?
-- Top segment by CTR
+- Summarize this PDF
+- Give me the main points of the report
+- What are the key takeaways from these documents?
 
-### `ask_campaign_summary`
+### `compare_passages_or_themes`
 
-User asks for a summary of campaign or channel performance.
-
-Examples:
-
-- Summarize this campaign
-- Give me a channel performance summary
-
-### `generate_campaign_brief`
-
-User asks for a creative or strategic brief.
+The user asks to compare retrieved ideas, sections, or topics across documents.
 
 Examples:
 
-- Draft a campaign brief
-- Turn this into a campaign idea
+- Compare the recommendations in both documents
+- How do these two sections differ?
+- What themes appear in common across the PDFs?
 
-### `help`
+### `source_trace_request`
 
-User asks what the assistant can do.
+The user asks where an answer came from or wants source metadata.
 
-### `fallback`
+Examples:
 
-User asks something out of scope or too ambiguous to resolve safely.
+- Which document says that?
+- Show me the source
+- What file did you use for this answer?
 
-## Entities
+### `unsupported_or_out_of_scope_query`
 
-- `metric`
-- `channel`
-- `segment`
-- `campaign`
-- `date_range`
-- `comparison_target`
+The user asks something that cannot be answered from the indexed corpus or from the current system capabilities.
 
-## Slots
+Examples:
 
-### `metric`
+- Search the live web for more information
+- Predict tomorrow's events from this report
+- Give me an answer without using the documents
 
-- type: text
-- examples: `ctr`, `cpc`, `roas`
+## Interaction Rules
 
-### `channel`
+- factual answers must be grounded in retrieved context
+- summary answers must stay faithful to retrieved passages
+- comparison answers must rely on retrieved evidence from each side being compared
+- source trace answers should expose document names or metadata when available
+- unsupported requests should produce a safe fallback
 
-- type: text
-- examples: `instagram`, `search`, `email`
+## Minimal Conversation Patterns
 
-### `segment`
-
-- type: text
-- examples: `gen_z`, `small_business`, `returning_users`
-
-### `campaign`
-
-- type: text
-
-### `date_range`
-
-- type: text
-- examples: `last month`, `q1_2026`
-
-### `last_tool_result`
-
-- type: any
-- used to support follow-up explanation or brief generation
-
-## Clarification Rules
-
-- If the user asks for campaign performance without identifying campaign or grouping dimension, ask a narrowing question.
-- If the user references "that" or "this" and `last_tool_result` exists, resolve from memory.
-- If a requested metric or field is unsupported, say so explicitly and offer supported alternatives.
+- ask a question, retrieve context, answer
+- ask for a summary after retrieval
+- ask where the answer came from
+- ask something unsupported and receive a bounded response

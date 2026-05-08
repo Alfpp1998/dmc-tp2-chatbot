@@ -2,56 +2,58 @@
 
 ## Objective
 
-Build the first working vertical slice of AdAgent Copilot as a reliable conversational assistant for marketing knowledge, campaign analytics, and grounded brief generation.
+Build a phase 1 chatbot that answers user questions from a bounded document collection using `LangChain + LLM + RAG`.
 
 ## Functional Requirements
 
-### FR-01 Conversation Routing
+### FR-01 Document Loading
 
-The assistant must classify messages into a controlled set of canonical intents and route them to the correct action path.
+The system must load documents from a configured folder or explicitly defined document set.
 
-### FR-02 Slot Memory
+### FR-02 Chunking
 
-The assistant must store and reuse slot values such as channel, segment, campaign, metric, and date range across follow-up turns when appropriate.
+The system must split loaded documents into chunks suitable for semantic retrieval.
 
-### FR-03 Metric Definitions
+### FR-03 Embeddings
 
-The assistant must answer marketing metric-definition questions using the curated glossary or other approved documents.
+The system must generate embeddings for indexed chunks using a configurable provider.
 
-### FR-04 Structured Analytics
+### FR-04 Vector Indexing
 
-The assistant must answer approved analytical questions by calling read-only allow-listed query functions over the normalized dataset.
+The system must store embedded chunks in a vector index that supports semantic search.
 
-### FR-05 Business Explanation
+### FR-05 Retrieval
 
-After a structured analytics result is returned, the assistant must explain the result in plain business language.
+The system must retrieve relevant context for a user question from the indexed corpus.
 
-### FR-06 Grounded Campaign Brief
+### FR-06 Grounded Answer Generation
 
-The assistant must generate a first campaign brief using retrieved context, current analytical findings, or both.
+The system must generate answers from retrieved context using `LangChain` and an LLM provider.
 
 ### FR-07 Safe Fallback
 
-The assistant must gracefully handle unsupported requests, missing slots, empty retrieval, and unavailable answers.
+The system must handle low-confidence or insufficient-context cases without fabricating unsupported facts.
 
-### FR-08 Local Demoability
+### FR-08 Demo Readiness
 
-The system must be runnable locally in a simple demo configuration.
+The system must provide a basic runnable demo that proves end-to-end indexing and question answering.
+
+## Technical Requirements
+
+- `Python` is the main implementation language.
+- `LangChain` is mandatory.
+- The project must use embeddings and a vector store.
+- The implementation must be modular enough to improve on the example baseline.
+- The project must include a README and an architecture description.
 
 ## Non-Functional Requirements
 
-- reliability over breadth
-- transparent tool boundaries
-- low hallucination risk
-- easy local setup
-- inspectable outputs
-
-## Data Constraints
-
-- dataset must be normalized before use
-- metric formulas must be defined explicitly
-- retrieval corpus must be curated, versioned, and documented
+- grounded responses over open-ended generation
+- traceable source metadata
+- clear project structure
+- reproducible execution steps
+- demo-friendly behavior
 
 ## Acceptance Summary
 
-The system is acceptable when it can answer a representative evaluation set covering FAQ, analytics, follow-up memory, retrieval-grounded answers, and campaign-brief generation.
+The system is acceptable when a user can load documents, index them, ask grounded questions, inspect or reference sources, and observe safe fallback behavior when evidence is insufficient.

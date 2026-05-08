@@ -2,58 +2,43 @@
 
 ## Product Name
 
-AdAgent Copilot Foundations
+Document-Grounded Intelligent Chatbot
 
 ## Product Thesis
 
-AdAgent Copilot Foundations is the foundational conversational layer of AdAgent Copilot.
-Its purpose is to convert a broad final-project vision into a real, demoable vertical slice that already works end to end.
+The current project phase delivers a chatbot that answers user questions from a bounded document set using `LangChain + LLM + RAG`.
+The goal is to show a complete, explainable, and demo-ready system that combines retrieval, semantic search, and natural-language answer generation.
 
-## Problem
+## Problem To Solve
 
-Marketing teams and students often need quick answers to three different types of questions:
+Users often need fast answers from long documents, PDFs, or curated knowledge sources, but reading and searching them manually is slow and error-prone.
+The chatbot should reduce this friction by retrieving the most relevant passages and generating answers grounded in those sources.
 
-- concept questions such as metric definitions
-- structured analysis questions over campaign data
-- action-oriented questions such as "what should we do next?"
+## Target Audience
 
-These are usually answered across disconnected tools, spreadsheets, notes, and ad hoc prompt usage.
+- course evaluators who need a clear technical demo
+- student builders who need an implementation-ready scope
+- end users who want document-based answers without manual searching
 
-## Target Users
+## Expected User Value
 
-- course evaluators who need a clear, reliable demo
-- student builders who need a tractable scope
-- marketing stakeholders who need understandable answers, not raw tables
+- ask natural-language questions about a document collection
+- receive answers based on retrieved passages
+- inspect or reference the document source behind an answer
+- get a functional demo that shows LLM + RAG working end to end
 
-## Core User Outcomes
+## Demo Expectation For This Phase
 
-- understand what a metric means
-- retrieve a trustworthy answer from the project knowledge base
-- compare performance across channels or segments
-- receive a short explanation in business language
-- obtain a grounded first draft of a campaign brief
+The demo should prove five things:
 
-## Product Phases
+- documents can be loaded into the system
+- the system can chunk and index them
+- semantic retrieval finds relevant context
+- the LLM answers from that context
+- the app responds safely when context is weak or missing
 
-### Phase 1: Course Final
+## Future Roadmap
 
-Deliver a narrow but complete assistant:
-
-- intent recognition and slot filling
-- safe analytical tools over a curated dataset
-- compact RAG layer over a curated corpus
-- explanation layer for business-facing responses
-- demo UI and packaged app
-
-### Phase 2: Diploma Extension
-
-Extend the same base with:
-
-- richer recommendations
-- performance feedback loops
-- bandit or optimization logic
-- possible decomposition into specialized agents if justified by complexity
-
-## Success Narrative
-
-The project should be presented as the first production slice of a larger marketing copilot, not as a toy chatbot.
+The repository may later evolve into AdAgent Copilot, a larger marketing decision-support system.
+That broader roadmap may include analytics, recommendation logic, richer workflows, and other business-facing capabilities.
+Those ideas are not part of the current contractual scope.

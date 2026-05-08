@@ -1,44 +1,35 @@
 # Architectural Decisions
 
-## ADR-001: Use Rasa As The Conversation Orchestrator
+## ADR-001: Use LangChain As The Required Application Framework
 
-Rasa is the primary orchestrator because the project needs explicit intents, slots, flows, fallbacks, and custom actions.
-This supports deterministic routing for analytics and controlled retrieval workflows.
+The course specification explicitly requires `LangChain`.
+All retrieval, chaining, and LLM orchestration choices in this phase must be built around it.
 
-## ADR-002: Use DuckDB For Analytics
+## ADR-002: Use A RAG Architecture
 
-DuckDB is the analytics layer because it is lightweight, local-first, and well suited for analytical queries over CSV, Parquet, or DataFrames.
-The system will expose allow-listed query functions instead of generated SQL.
+The core system pattern is retrieval-augmented generation.
+The chatbot first retrieves relevant document context and then generates an answer from that context.
 
-## ADR-003: Use A Curated RAG Corpus
+## ADR-003: Treat Documents As The Source Of Truth
 
-The retrieval layer will start from a small, curated document set:
+Answers in this phase must be grounded in the indexed corpus.
+The LLM is responsible for synthesis and phrasing, not for introducing unsupported facts.
 
-- project one-pager
-- metrics glossary
-- dataset data dictionary
-- campaign brief template(s)
+## ADR-004: Keep Retrieval And Generation As Separate Steps
 
-This lowers hallucination risk and keeps evaluation manageable.
+The architecture must expose a clear retrieval step before answer generation.
+This separation improves debuggability, evaluation, and hallucination control.
 
-## ADR-004: Use FAISS-Backed Vector Retrieval
+## ADR-005: Use A Vector Store Compatible With The Example Or Simpler To Operate
 
-FAISS is the first retrieval index because it is simple, fast, and fits the small local corpus expected in this phase.
+The implementation should remain compatible with the pattern shown in `example/TallerLCH` or adopt a simpler vector backend if it improves demo reliability.
+The documentation should not depend on a more complex infrastructure choice than needed for the phase.
 
-## ADR-005: Use LLMs Only In Bounded Roles
+## ADR-006: Support OpenAI And HuggingFace-Oriented Providers
 
-LLMs are allowed for:
+The project should document a flexible LLM and embedding provider layer so the implementation can run with either OpenAI or HuggingFace-compatible components when practical.
 
-- explanation of structured analytics
-- grounded answer synthesis from retrieved context
-- campaign brief drafting
+## ADR-007: Optimize For Demo Clarity Over Product Breadth
 
-LLMs are not the source of truth for metrics or schema.
-
-## ADR-006: Package Tools Behind Clear Contracts
-
-Analytics and retrieval actions should expose stable JSON contracts so Rasa actions, FastAPI endpoints, and tests can align on the same interface.
-
-## ADR-007: Keep A Single-Assistant Architecture For Phase 1
-
-The system stays single-assistant until there is clear evidence that the number of tools, contexts, or specialized subtasks justifies decomposition.
+The system should be easy to explain, run, and validate during the final presentation.
+Additional platform ambitions belong to future phases.

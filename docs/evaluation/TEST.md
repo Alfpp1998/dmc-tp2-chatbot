@@ -1,44 +1,40 @@
 # Acceptance Tests
 
-## Test Categories
+## Indexing
 
-### Routing
+- [Owner: Ingestion] The system loads all supported documents from the configured input path.
+- [Owner: Ingestion] The system splits documents into chunks using the configured chunk size and overlap.
+- [Owner: Ingestion] The system builds a searchable vector index without losing source metadata.
 
-- [Owner: Conversation] The assistant maps representative user utterances to the correct canonical intent.
-- [Owner: Conversation] Unsupported queries trigger a safe fallback instead of an incorrect tool call.
+## Retrieval
 
-### Slot Memory
+- [Owner: Retrieval] A representative factual question returns relevant chunks from the indexed corpus.
+- [Owner: Retrieval] Retrieval results include document-level traceability such as file name, document ID, or source path.
+- [Owner: Retrieval] Multiple documents can be indexed and queried in the same run.
 
-- [Owner: Conversation] The assistant can answer a follow-up such as "now filter that by segment" using prior context.
-- [Owner: Conversation] Missing required slots trigger clarification prompts.
+## Grounded Answering
 
-### Analytics
+- [Owner: Generation] The answer uses retrieved context rather than unsupported free-form claims.
+- [Owner: Generation] A summary request stays faithful to the retrieved passages.
+- [Owner: Generation] A source-trace request can identify the supporting document when metadata is available.
 
-- [Owner: Data] Metric answers come from tool output, not free-form generation.
-- [Owner: Data] Channel and segment comparisons match expected values for the evaluation dataset.
+## Safety And Fallback
 
-### Retrieval
+- [Owner: Shared] If the retriever finds weak or insufficient evidence, the system returns a bounded fallback instead of guessing.
+- [Owner: Shared] Unsupported requests such as live-web search are acknowledged as out of scope.
 
-- [Owner: Data] Definition questions retrieve the correct glossary or data-dictionary passage.
-- [Owner: Data] If retrieval returns weak or empty context, the assistant says the answer is unavailable from current documents.
+## Demo Readiness
 
-### Generation
-
-- [Owner: Shared] Campaign briefs use retrieved context and available analytics facts.
-- [Owner: Shared] Generated explanations do not introduce unsupported numerical claims.
+- [Owner: Shared] The project demonstrates end-to-end flow from document loading to answer generation.
+- [Owner: Shared] At least one demo scenario uses multiple documents or PDFs.
 
 ## Minimum Evaluation Set
 
-Create 20 to 30 representative questions covering:
+Create representative scenarios for:
 
-- FAQ and definitions
-- per-channel analytics
-- segment comparisons
-- follow-up memory
-- campaign summary
-- campaign brief generation
-- fallback behavior
-
-## Release Gate
-
-The first vertical slice is ready when each category above has passing representative examples and no critical hallucination cases remain open.
+- factual question about one document
+- summary request over retrieved content
+- comparison-style question across documents or sections
+- source trace request
+- insufficient-context query
+- end-to-end indexing plus query demo

@@ -1,71 +1,66 @@
 # End-To-End Data Flow
 
-## 1. User Message Intake
+## Indexing Flow
 
-The user submits a chat message through the UI.
-The message is sent to Rasa for intent classification and entity extraction.
+### 1. Load
 
-## 2. Routing Decision
+The system reads documents from a configured directory, file list, or other bounded input source.
+Each document is normalized into a LangChain-compatible document object with source metadata.
 
-Rasa routes the message using:
+### 2. Split
 
-- intent
-- current slot state
-- dialogue context
-- fallback thresholds
+Documents are divided into chunks using a text splitter.
+Chunk size and overlap should be configurable and chosen to balance retrieval quality and context density.
 
-Possible route targets:
+### 3. Embed
 
-- analytics action
-- retrieval action
-- campaign brief generation action
-- clarification or fallback response
+Each chunk is transformed into a vector using the configured embedding model.
+The embedding provider must be documented and reproducible.
 
-## 3. Structured Tool Execution
+### 4. Store
 
-For analytics questions:
+Chunk vectors and metadata are written to the vector index.
+The stored metadata should include enough information to trace an answer back to document origin.
 
-- Rasa custom action validates slots
-- action calls an allow-listed query function
-- query function reads the normalized dataset in DuckDB
-- function returns a structured JSON payload
+## Query Flow
 
-## 4. Retrieval Execution
+### 1. Receive Query
 
-For knowledge questions:
+The user sends a natural-language question through the app or demo interface.
 
-- retrieval action transforms the query into an embedding lookup
-- top passages are retrieved from FAISS
-- metadata is attached to each result
-- passages are sent to the LLM as bounded context
+### 2. Retrieve Context
 
-## 5. Response Synthesis
+The retriever converts the query into a vector and returns the top relevant chunks from the index.
+The retrieval result should include source metadata and similarity score when available.
 
-The LLM receives one of:
+### 3. Ground The Prompt
 
-- structured analytics result
-- retrieved passages
-- both analytics and retrieved passages
+The application builds a prompt containing:
 
-The LLM must:
+- the user question
+- the retrieved passages
+- instructions that limit the answer to available context
 
-- explain results without changing the facts
-- cite the source document names where relevant
-- acknowledge uncertainty when context is insufficient
+### 4. Generate Answer
 
-## 6. Conversation Continuity
+The LLM produces an answer from the grounded prompt.
+If the retrieved evidence is weak or insufficient, the system should say so instead of inventing information.
 
-Key slots remain available for follow-up requests such as:
+### 5. Return Response
 
-- "now filter by segment"
-- "compare that with email"
-- "turn this into a campaign brief"
+The final response should include:
 
-## 7. Logging And Evaluation Hooks
+- the answer
+- optional source references or document names
+- a safe fallback message when the context is not enough
 
-Each tool action should produce structured logs for:
+## Guardrails
 
-- input payload
-- resolved slots
-- tool output
-- fallback state if any
+- answer from retrieved context whenever possible
+- explicitly acknowledge insufficient evidence
+- do not invent facts absent from the source material
+
+## Phase Boundary
+
+This flow covers the current RAG chatbot only.
+Advanced conversational state management, business analytics, and recommendation loops are deferred to future work.

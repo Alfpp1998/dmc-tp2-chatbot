@@ -2,35 +2,37 @@
 
 ## In Scope
 
-- one assistant orchestrated through Rasa
-- 6 to 8 canonical intents
-- slot-based follow-up questions
-- read-only analytics over a normalized local dataset
-- marketing glossary and project-document retrieval through RAG
-- LLM-based explanation of structured results
-- grounded campaign brief generation from retrieved context plus analytics
-- fallback and uncertainty handling
-- basic packaging for local demo or deployment
+- document ingestion from a defined folder or file set
+- text chunking for retrieval
+- embeddings generation
+- vector index creation and storage
+- semantic retrieval with `LangChain`
+- grounded answer generation with an LLM
+- a simple demo UI or runnable interaction flow
+- architecture and technical documentation
+- README-level usability and execution guidance
+- basic handling of hallucination risk and unsupported queries
 
 ## Explicitly Out Of Scope
 
-- unrestricted natural-language-to-SQL
-- multi-armed bandit logic
-- live production ad-platform integrations
-- multi-agent orchestration by default
-- autonomous actions that modify campaign data
-- broad web search as a knowledge source
-- uncurated document ingestion at large scale
+- Rasa orchestration
+- DuckDB or SQL analytics
+- campaign scoring and recommendations
+- multi-armed bandits
+- live advertising platform APIs
+- unrestricted web search
+- multi-agent orchestration
+- production-grade deployment concerns beyond demo readiness
 
 ## Scope Rationale
 
-This phase exists to maximize end-to-end reliability and demo clarity.
-When behavior is known in advance, deterministic workflows are preferred over open-ended generative behavior.
+This phase is intentionally narrow so the system can demonstrate real RAG behavior without being diluted by unrelated subsystems.
+The evaluation emphasizes an end-to-end chatbot with retrieval, generation, and a working prototype rather than a larger product platform.
 
 ## Change Policy
 
-Any new capability should be classified before implementation:
+Classify all new requests before implementation:
 
-- `now`: needed for the first vertical slice
-- `later`: useful for the diploma extension
-- `never for this repo`: conflicts with product constraints or evaluation needs
+- `now`: required for the phase 1 chatbot delivery
+- `later`: aligned with the future AdAgent roadmap
+- `not now`: useful, but outside the current evaluation target

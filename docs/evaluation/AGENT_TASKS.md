@@ -1,42 +1,40 @@
 # Team Task Allocation
 
-## Role 1: Conversation And Product Owner
+## Role 1: Ingestion And Indexing Owner
 
 ### Responsibilities
 
-- define user stories and demo narrative
-- design intents, entities, and slots
-- implement Rasa stories, rules, or flows
-- wire custom actions into the assistant
-- design fallback and clarification behavior
-- build the basic Streamlit chat interface
+- define supported document types and loaders
+- implement document normalization and metadata preservation
+- configure chunking strategy
+- build the embedding and vector indexing path
+- document indexing assumptions and runtime configuration
 
 ### Constraints
 
-- do not bypass tool contracts
-- preserve canonical intent and slot names from `specs/`
-- keep conversations explainable and demo-friendly
+- keep the implementation aligned with `LangChain`
+- preserve source traceability
+- avoid unnecessary infrastructure complexity for the phase 1 demo
 
-## Role 2: Data And Intelligence Owner
+## Role 2: Retrieval, Generation, And Demo Owner
 
 ### Responsibilities
 
-- choose and normalize the public dataset
-- define DuckDB analytical functions
-- curate the RAG corpus
-- implement chunking, embeddings, and FAISS indexing
-- define prompt templates for explanation and brief generation
-- expose clean API or function contracts
+- implement retrieval behavior over the vector index
+- define grounded-answer prompting
+- implement safe fallback behavior
+- build the runnable demo interface or interaction flow
+- prepare source-aware responses for presentation
 
 ### Constraints
 
-- no unrestricted SQL generation
-- no uncurated corpus expansion in phase 1
-- generated text must remain grounded in tool or retrieval outputs
+- answers must stay grounded in retrieved context
+- unsupported capabilities must be surfaced clearly
+- demo behavior should remain easy to explain
 
 ## Shared Responsibilities
 
-- maintain the evaluation set
-- agree on tool input and output schemas
-- rehearse the demo flow
-- document assumptions and known limitations
+- maintain the evaluation scenarios
+- keep README and docs aligned with implementation
+- prepare architecture diagrams and final slides
+- validate that the end-to-end demo works from a fresh setup

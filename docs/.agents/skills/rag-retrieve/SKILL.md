@@ -2,28 +2,29 @@
 
 ## When To Use
 
-Use this skill when implementing or updating the retrieval layer for glossary, dataset, or template knowledge.
+Use this skill when implementing or improving retrieval behavior for the phase 1 `LangChain + RAG` chatbot.
 
 ## Inputs
 
-- user question
-- approved corpus
+- user query
+- indexed corpus
 - retrieval settings from `docs/specs/rag_pipeline.md`
+- tool contracts from `docs/specs/tool_contracts.md`
 
 ## Procedure
 
-1. Confirm the requested answer belongs to the approved corpus domain.
-2. Chunk documents using semantic boundaries where possible.
-3. Build or update embeddings and the FAISS index.
-4. Retrieve top passages with metadata.
-5. Pass only retrieved context into the grounded-answer prompt.
+1. Confirm the query is intended to be answered from indexed documents.
+2. Retrieve the top relevant chunks from the vector backend.
+3. Preserve document names, chunk IDs, scores, and metadata in the result bundle.
+4. Pass only retrieved context into the grounded-answer step.
+5. Evaluate whether the evidence is sufficient before generating a final answer.
 
 ## Guardrails
 
-- do not answer from model memory when the prompt requires retrieved context
-- do not ingest arbitrary web content in phase 1
-- surface insufficient context explicitly
+- do not answer from model memory when the flow requires retrieved context
+- do not hide weak retrieval behind confident generation
+- preserve source traceability for evaluation and demo use
 
 ## Expected Output
 
-A retrieval result bundle with document IDs, chunk IDs, scores, and passage text ready for grounded synthesis.
+A retrieval result bundle ready for grounded generation, including context text and source metadata.

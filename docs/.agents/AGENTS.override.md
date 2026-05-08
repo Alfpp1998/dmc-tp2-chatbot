@@ -2,21 +2,22 @@
 
 ## `docs/specs`
 
-- Treat files here as executable contracts for implementation.
-- Update these files when behavior changes materially.
-- Prefer exact field names, enums, example payloads, and acceptance criteria.
+- Treat files here as implementation contracts for the phase 1 chatbot.
+- Keep names, payloads, and examples aligned with a `LangChain + RAG` pipeline.
+- Avoid legacy references to Rasa routing, analytics tools, or recommendation logic.
 
 ## `docs/architecture`
 
-- Keep diagrams and flow descriptions aligned with current implementation.
-- Prefer deterministic sequence descriptions over aspirational architecture.
+- Keep the architecture grounded in the actual phase 1 system.
+- Describe indexing and query flows separately.
+- Preserve the distinction between retrieval and generation.
 
 ## `docs/evaluation`
 
-- Every new user-facing capability should eventually add or update acceptance tests here.
-- Evaluation should focus on factuality, routing correctness, retrieval quality, and safe fallbacks.
+- Evaluation should focus on retrieval relevance, grounded answering, safe fallback behavior, and demo readiness.
+- Every user-facing capability should have at least one acceptance scenario.
 
 ## `docs/.agents/skills`
 
-- Skills should be concise and operational.
-- Each skill should define inputs, outputs, guardrails, and failure handling.
+- Skills should be operational and phase-specific.
+- Prioritize document ingestion, indexing, retrieval quality, prompt grounding, and demo validation.

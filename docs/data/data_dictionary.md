@@ -1,40 +1,37 @@
-# Data Dictionary
+# Corpus Data Dictionary
 
 ## Purpose
 
-Document the normalized analytics dataset used by AdAgent Copilot Foundations.
+Document the canonical metadata and chunk structure for the phase 1 chatbot corpus.
 
-## Expected Canonical Fields
+## Canonical Document Fields
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `date` | date | observation date |
-| `campaign` | text | campaign identifier |
-| `channel` | text | acquisition or advertising channel |
-| `segment` | text | audience segment |
-| `impressions` | integer | number of impressions |
-| `clicks` | integer | number of clicks |
-| `spend` | float | advertising spend |
-| `conversions` | integer | number of conversions |
-| `revenue` | float | attributed revenue |
+| `document_id` | text | stable internal identifier for a loaded document |
+| `source_path` | text | original file path or source reference |
+| `title` | text | display-friendly document title |
+| `source_type` | text | file type or loader category such as `pdf` or `markdown` |
+| `metadata` | object | additional loader metadata such as page or section |
 
-## Derived Metrics
+## Canonical Chunk Fields
 
-| Metric | Formula | Notes |
+| Field | Type | Description |
 | --- | --- | --- |
-| `ctr` | `clicks / impressions` | guard against division by zero |
-| `cpc` | `spend / clicks` | guard against division by zero |
-| `cvr` | `conversions / clicks` | conversion rate |
-| `roas` | `revenue / spend` | return on ad spend |
+| `chunk_id` | text | stable identifier for a chunk |
+| `document_id` | text | parent document identifier |
+| `chunk_text` | text | chunk content used for embedding and retrieval |
+| `chunk_index` | integer | sequential position of the chunk within the document |
+| `embedding_model` | text | embedding model used at indexing time |
+| `vector_backend` | text | vector store backend used for indexing |
 
-## Normalization Rules
+## Metadata Expectations
 
-- standardize channel and segment naming
-- validate numeric fields before loading into DuckDB
-- keep raw source file separate from normalized output
-- record transformation assumptions in the ETL layer
+- preserve enough metadata to trace a chunk back to its source
+- include page numbers when available for PDF-based sources
+- keep source names stable enough for answer citation
 
-## Open Items
+## Template Notes
 
-- replace this document with real field names once the selected public dataset is fixed
-- add example records and null-handling rules
+If the final corpus is not yet fixed, new sources should still be normalized to the field set above.
+Additional metadata is allowed as long as the canonical fields remain present.

@@ -2,48 +2,57 @@
 
 ## Goal
 
-Provide grounded answers for definitions, project knowledge, dataset terminology, and campaign-brief scaffolding.
+Provide grounded answers over a bounded document corpus using `LangChain`, embeddings, semantic retrieval, and LLM-based synthesis.
 
-## Approved Corpus
+## Approved Source Types
 
-- project one-pager
-- marketing metrics glossary
-- dataset data dictionary
-- campaign brief template(s)
-- short product and scope documents from this repo when useful
+- PDF files
+- Markdown documents
+- plain text documents
+- other file types only if a loader is explicitly documented
 
 ## Corpus Rules
 
-- every document must have a stable document ID
-- every document must declare its source and version
-- do not ingest arbitrary internet content in phase 1
+- every source must have a stable document identifier
+- every source must preserve path or origin metadata
+- the phase 1 chatbot answers only from indexed documents
+- arbitrary live-web ingestion is out of scope
 
 ## Chunking Strategy
 
-- chunk by semantic section first
-- target small to medium chunks that preserve definitional completeness
-- keep overlap only where needed to preserve formulas or field descriptions
+- default strategy: recursive character splitting
+- chunk size should be configurable
+- chunk overlap should be configurable
+- chunks should preserve enough local meaning for retrieval-based answering
 
-## Embedding Strategy
+## Embedding Providers
 
-- use one embedding model consistently for the whole index
-- record embedding model name and version in index metadata
+- OpenAI embeddings are supported
+- HuggingFace-oriented embeddings are supported when practical
+- the configured provider and model must be recorded in index metadata or runtime configuration
 
-## Retrieval Policy
+## Vector Store
+
+- the vector backend must work with the `LangChain` pipeline
+- compatibility with the example's OpenSearch pattern is acceptable
+- a simpler backend is also acceptable if it improves local reliability and demo readiness
+
+## Retrieval Defaults
 
 - default `top_k`: 4
-- rerank only if retrieval quality becomes a measured problem
-- prefer precision over recall for definition questions
+- retrieval results should include score when available
+- retrieval results should include document and chunk metadata
 
-## Prompting Rules For Grounded Answers
+## Grounding Rules
 
 - answer only from retrieved context
-- if context is insufficient, say so
-- do not invent formulas, fields, or business claims
-- cite document names when summarizing definitions or templates
+- if context is insufficient, say so explicitly
+- do not invent facts, citations, or source passages
+- preserve source references when the answer format allows it
 
-## Evaluation Targets
+## Quality Criteria
 
-- retrieval returns the correct glossary entry for key metrics
-- retrieval returns the correct data-dictionary section for supported fields
-- brief-generation context includes at least one template or structure source when available
+- relevant chunks should be retrieved for representative questions
+- answers should remain faithful to retrieved text
+- unsupported questions should trigger safe fallback behavior
+- the pipeline should remain understandable enough for course presentation

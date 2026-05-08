@@ -2,46 +2,59 @@
 
 ## Main Flow
 
-`User -> UI -> Rasa Router -> Tool Path -> LLM Explanation Layer -> Answer`
+`User -> App/UI -> LangChain Pipeline -> Retriever -> LLM -> Answer`
 
-## Components
+## Core Subsystems
 
-### UI
+### Document Loader
 
-- lightweight chat interface in Streamlit
-- optional side panel for latest analytical result or retrieved passages
+- reads files from a defined source directory or file list
+- converts supported files into LangChain document objects
+- preserves source metadata for later citation and debugging
 
-### Rasa Router
+### Text Splitter
 
-- detects intent
-- fills entities and slots
-- chooses between analytics, retrieval, or generation paths
-- handles clarification and fallback
+- breaks large documents into retrieval-sized chunks
+- keeps enough overlap to preserve local meaning across chunk boundaries
+- attaches chunk metadata for traceability
 
-### Analytics Tool Layer
+### Embedding Model
 
-- runs read-only allow-listed functions over DuckDB
-- returns structured metric output
-- never executes unrestricted SQL from user text
+- converts chunks and queries into vector representations
+- can use OpenAI or HuggingFace-oriented providers
+- must remain configurable without changing the high-level architecture
 
-### Retrieval Layer
+### Vector Index
 
-- retrieves relevant passages from curated documents
-- returns passages with document metadata
+- stores chunk embeddings for semantic search
+- supports repeated queries after indexing
+- retains metadata needed for source-aware answers
 
-### LLM Explanation Layer
+### Retriever
 
-- transforms structured outputs into plain-language explanations
-- drafts grounded campaign briefs using analytics and retrieved context
+- receives the user query
+- finds the most relevant chunks from the vector index
+- returns ranked context for answer generation
 
-## Operating Modes
+### Answer Chain
 
-- deterministic mode for metric queries
-- retrieval-grounded mode for definitions and knowledge questions
-- hybrid mode for campaign-brief generation
+- receives the user question plus retrieved context
+- generates a grounded answer through `LangChain`
+- should explicitly handle weak or missing evidence
 
-## Design Principle
+### Demo Interface
 
-Separate truth-generating systems from language-generating systems.
-DuckDB and the curated corpus provide truth.
-The LLM provides explanation and synthesis.
+- provides a simple way to run the chatbot end to end
+- can be CLI, notebook, or lightweight app UI
+- should make the indexing and query path easy to demonstrate
+
+## Architectural Principle
+
+The system must separate:
+
+- indexing-time work: load, split, embed, store
+- query-time work: retrieve, ground, generate, answer
+
+## Phase Boundary
+
+Advanced conversational orchestration, analytics layers, recommendation engines, and AdAgent-specific decision logic belong to later phases and must not shape the current system design.

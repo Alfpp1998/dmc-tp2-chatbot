@@ -1,54 +1,56 @@
-# AdAgent Copilot Workspace Guide
+# Phase 1 Workspace Guide
 
 ## Purpose
 
-This `docs/` tree is the source of truth for Spec-Driven Development of AdAgent Copilot Foundations.
-Codex should read these documents before generating code, tests, prompts, datasets, or UI flows.
+This `docs/` tree is the source of truth for the course-delivery version of the project.
+The current implementation target is a document-grounded chatbot built with `Python + LangChain + LLM + RAG`.
 
-## Product Summary
+## Current Product Definition
 
-AdAgent Copilot Foundations is the first working vertical slice of a conversational marketing copilot.
-It is intentionally narrower than the diploma-stage vision.
-The goal is to prove an end-to-end assistant that can:
+Phase 1 is not the full AdAgent Copilot vision.
+It is a narrower but complete chatbot that can:
 
-- answer marketing FAQ and metric-definition questions
-- answer controlled analytics questions over a curated dataset
-- explain metrics in business language
-- generate a first campaign brief grounded in retrieved context and analytics output
+- load and process documents
+- create embeddings and a searchable vector index
+- retrieve relevant passages for a user question
+- generate grounded answers from retrieved context
+- expose a simple demo flow that proves the end-to-end system works
+
+## Mandatory Stack For This Phase
+
+- `Python` as the main language
+- `LangChain` as the orchestration framework
+- an LLM provider through OpenAI or HuggingFace-compatible components
+- embeddings plus a vector store for semantic retrieval
+- a simple app or demo interface for the final presentation
 
 ## Non-Negotiable Constraints
 
-- Prefer one assistant with explicit tools over multi-agent orchestration.
-- Do not implement unrestricted SQL generation.
-- Do not implement multi-armed bandits in this phase.
-- Do not fabricate metrics, glossary definitions, or dataset fields.
-- Keep analytics deterministic and tool-backed.
-- Keep RAG corpus small, curated, and explainable.
-- Use LLMs mainly for explanation, rewrite, and brief generation.
+- `LangChain` is required in this phase.
+- Retrieved documents are the source of truth for answers.
+- The assistant must not invent facts not supported by retrieved context.
+- Retrieval and generation must remain separable in the architecture.
+- The project must stay simple enough to demo and explain clearly.
 
-## Expected Stack
+## Explicitly Out Of Scope For Phase 1
 
-- Rasa Open Source for orchestration
-- DuckDB for local analytics queries
-- FAISS plus embeddings for retrieval
-- FastAPI for tool/API contracts
-- Streamlit for demo UI
-- Docker or Docker Compose for packaging
+- Rasa-based orchestration
+- DuckDB analytics
+- marketing recommendation engines
+- multi-armed bandits
+- unrestricted web search
+- multi-agent decomposition
+
+## Relationship To AdAgent Copilot
+
+The broader AdAgent Copilot concept remains the long-term direction of the repository.
+For this course delivery, it should be treated only as future evolution.
+No current implementation decision should depend on later analytics or recommendation features.
 
 ## Working Norms For Codex
 
-- Read `steering/` before architecture or implementation work.
-- Read `specs/` before writing code.
-- Preserve terminology and canonical names from the spec documents.
-- If a requested feature conflicts with `steering/scope.md`, call it out before implementing.
-- Prefer small, testable increments that match the sprint sequence.
-
-## Delivery Principle
-
-Every implementation should map back to one of these layers:
-
-1. conversation/orchestration
-2. analytics tool
-3. explanation layer
-4. retrieval layer
-5. packaging and evaluation
+- Read `steering/` before making architecture or code decisions.
+- Read `specs/` before generating implementation tasks.
+- Preserve `LangChain` as a required dependency in all current-phase docs.
+- Prefer modular design that improves on `example/TallerLCH` without changing the product scope.
+- If a requested feature belongs to the future AdAgent roadmap, mark it as out of current scope.
