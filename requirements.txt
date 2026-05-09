@@ -1,0 +1,34 @@
+# Requirements for the dmc-tp2-chatbot project
+# Recommended for Python 3.10+
+
+# Core LangChain stack
+langchain==1.2.18
+langchain-community==0.4.1
+langchain-openai==1.2.1
+langchain-text-splitters==1.1.1
+
+# LLM and tokenization
+openai==2.36.0
+tiktoken==0.12.0
+
+# Vector store
+faiss-cpu==1.13.2
+
+# Document loading and parsing
+pypdf==6.10.2
+
+# Configuration
+python-dotenv==1.2.2
+
+# Data and utilities
+numpy==2.4.4
+pandas==3.0.2
+
+# Optional local or alternative embeddings
+sentence-transformers==5.4.1
+
+# Demo interface
+streamlit==1.57.0
+
+# Testing
+pytest==9.0.3

@@ -13,7 +13,21 @@ En esta etapa, el objetivo no es construir todavía el sistema grande de AdAgent
 - recuperar contexto relevante
 - responder preguntas de forma grounded
 
+La estrategia actual de interacción considera:
+
+- `Streamlit` como UI principal de demo
+- `notebook` como interfaz de revisión step by step
+
+La app principal debería dividirse en dos áreas:
+
+- `Indexing & Review` para preparar el corpus, configurar parámetros e inspeccionar retrieval
+- `Chat` para conversar con el asistente sobre el índice ya construido
+
 La decisión actual de arquitectura asume `FAISS` como vector store para simplificar el desarrollo local y la demo.
+Para generación de respuestas, la arquitectura está pensada como agnóstica de proveedor:
+
+- `Qwen` como proveedor por defecto en esta fase
+- `OpenAI` como proveedor adicional compatible
 
 ## Objetivo de esta fase
 
@@ -60,6 +74,36 @@ Flujos internos:
 2. **Consulta**
    Pregunta -> Retriever -> Contexto relevante -> Prompt grounded -> LLM -> Respuesta con fuentes
 
+Interfaz prevista:
+
+- `Streamlit` para la demo final
+- `notebook` para inspeccionar indexación, retrieval y generación paso a paso
+
+Configuraciones editables recomendadas en la UI:
+
+En `Indexing & Review`:
+
+- selección de corpus o carpeta
+- selección de proveedor de embeddings
+- selección de modelo de embeddings según el proveedor elegido
+- acción de indexar o reindexar
+- `chunk_size`
+- `chunk_overlap`
+- `top_k`
+- visualización de fuentes o chunks recuperados
+
+En `Chat`:
+
+- selección de proveedor de answering entre los disponibles
+- selección de modelo dentro del proveedor elegido
+- visualización de fuentes en la respuesta
+
+Las configuraciones técnicas más sensibles, como API keys o defaults internos, deberían mantenerse fuera de la UI principal.
+La recomendación es usar `Streamlit` para capturar estos inputs y `Pydantic` para validarlos antes de ejecutar el pipeline.
+Los proveedores visibles en la UI deberían depender de qué credenciales estén configuradas en el entorno.
+La lista de modelos del chat debería actualizarse según el proveedor seleccionado y venir de un catálogo curado del proyecto.
+Para embeddings, se pueden ofrecer tanto opciones API-based como modelos locales.
+
 La arquitectura detallada está en [docs/architecture/ARCHITECTURE.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/architecture/ARCHITECTURE.md:1).
 
 ## Requerimientos funcionales
@@ -86,6 +130,24 @@ La estrategia recomendada para el corpus inicial tiene 3 capas:
 
 La propuesta concreta está en [docs/corpus_candidates.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/corpus_candidates.md:1).
 
+Convención sugerida de almacenamiento:
+
+```text
+data/
+  corpus/
+    project/
+    official_sources/
+    papers/
+  indexes/
+    faiss/
+```
+
+Comportamiento esperado del índice:
+
+- si el índice `FAISS` ya existe y sigue siendo válido, la app debe reutilizarlo
+- solo debe reindexar cuando cambie el corpus o parámetros clave del proceso de indexación
+- cambiar el proveedor o modelo de embeddings debe forzar reindexación
+
 ## Documentación clave
 
 - Guía general: [docs/AGENTS.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/AGENTS.md:1)
@@ -97,6 +159,7 @@ La propuesta concreta está en [docs/corpus_candidates.md](/Users/chperezpelaez/
 - Contratos: [docs/specs/tool_contracts.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/specs/tool_contracts.md:1)
 - Prompts: [docs/specs/llm_prompts.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/specs/llm_prompts.md:1)
 - Evaluación: [docs/evaluation/TEST.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/evaluation/TEST.md:1)
+- Estructura recomendada del proyecto: [docs/project_structure.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/project_structure.md:1)
 
 ## Referencia base
 
@@ -127,5 +190,5 @@ Todavía no representa una implementación final del chatbot.
 3. Implementar embeddings e índice `FAISS`.
 4. Implementar retrieval con `LangChain`.
 5. Conectar el answer chain con el LLM.
-6. Construir una demo simple.
+6. Construir la demo en `Streamlit` y el notebook de revisión.
 7. Validar con los casos definidos en `docs/evaluation/TEST.md`.

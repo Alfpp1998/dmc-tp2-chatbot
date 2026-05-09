@@ -25,11 +25,19 @@ This separation improves debuggability, evaluation, and hallucination control.
 `FAISS` is the default vector store for the current delivery.
 It is a pragmatic choice for local development and course demos because it keeps the retrieval layer simple and avoids unnecessary infrastructure overhead.
 
-## ADR-006: Support OpenAI And HuggingFace-Oriented Providers
+## ADR-006: Use A Provider-Agnostic LLM And Embedding Layer
 
-The project should document a flexible LLM and embedding provider layer so the implementation can run with either OpenAI or HuggingFace-compatible components when practical.
+The project should document a flexible provider layer so the implementation can run with different LLM and embedding backends without changing the RAG architecture.
+For phase 1, `Qwen` is the default answering provider.
+`OpenAI` should remain a supported additional provider rather than a redesign trigger.
+For embeddings, the system should support both API-based and local options, since local embeddings are a practical way to reduce cost during indexing and retrieval.
 
-## ADR-007: Optimize For Demo Clarity Over Product Breadth
+## ADR-007: Detect Available Providers From Configuration
+
+The app should surface only the providers whose API keys or required settings are available in the environment.
+This keeps the UI simple while still allowing multiple provider integrations.
+
+## ADR-008: Optimize For Demo Clarity Over Product Breadth
 
 The system should be easy to explain, run, and validate during the final presentation.
 Additional platform ambitions belong to future phases.

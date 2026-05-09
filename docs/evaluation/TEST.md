@@ -25,7 +25,8 @@
 
 ## Demo Readiness
 
-- [Owner: Shared] The project demonstrates end-to-end flow from document loading to answer generation.
+- [Owner: Shared] The project demonstrates end-to-end flow from document loading to answer generation through the `Streamlit` demo UI.
+- [Owner: Shared] The project provides a notebook that exposes the same pipeline step by step for inspection and review.
 - [Owner: Shared] At least one demo scenario uses multiple documents or PDFs.
 
 ## Minimum Evaluation Set
