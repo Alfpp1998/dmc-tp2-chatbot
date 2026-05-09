@@ -8,6 +8,8 @@
 - implement document normalization and metadata preservation
 - configure chunking strategy
 - build the embedding and vector indexing path
+- support both API-based and local embedding options
+- ensure embedding changes correctly trigger reindex behavior
 - document indexing assumptions and runtime configuration
 
 ### Constraints
@@ -22,8 +24,11 @@
 
 - implement retrieval behavior over the vector index
 - define grounded-answer prompting
+- implement the provider-agnostic answering layer
+- maintain the curated provider-to-model catalog for answering
 - implement safe fallback behavior
-- build the runnable demo interface or interaction flow
+- build the `Streamlit` demo interface
+- prepare the review notebook with step-by-step execution flow
 - prepare source-aware responses for presentation
 
 ### Constraints
@@ -38,3 +43,4 @@
 - keep README and docs aligned with implementation
 - prepare architecture diagrams and final slides
 - validate that the end-to-end demo works from a fresh setup
+- validate that UI controls for embeddings and answering stay scoped to the correct panel

@@ -6,6 +6,7 @@
 - tool outputs must be deterministic and JSON-serializable
 - source metadata must be preserved where relevant
 - errors must be explicit and machine-readable
+- embedding-related operations must preserve enough metadata to determine when reindexing is required
 
 ## `load_documents`
 
@@ -79,9 +80,9 @@ Embed document chunks and store them in a searchable vector index.
 
 ```json
 {
-  "embedding_provider": "openai",
-  "embedding_model": "text-embedding-3-small",
-  "vector_backend": "opensearch",
+  "embedding_provider": "sentence_transformers",
+  "embedding_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "vector_backend": "faiss",
   "index_name": "phase1_chatbot_index"
 }
 ```
@@ -91,11 +92,47 @@ Embed document chunks and store them in a searchable vector index.
 ```json
 {
   "index_name": "phase1_chatbot_index",
-  "vector_backend": "opensearch",
-  "embedding_provider": "openai",
-  "embedding_model": "text-embedding-3-small",
+  "vector_backend": "faiss",
+  "embedding_provider": "sentence_transformers",
+  "embedding_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
   "chunks_indexed": 42,
+  "requires_rebuild_on_change": [
+    "embedding_provider",
+    "embedding_model",
+    "chunk_size",
+    "chunk_overlap"
+  ],
   "status": "ready"
+}
+```
+
+## `load_or_reuse_index`
+
+### Purpose
+
+Load an existing persisted `FAISS` index when it is still valid for the selected corpus and indexing configuration.
+
+### Input
+
+```json
+{
+  "index_name": "phase1_chatbot_index",
+  "embedding_provider": "sentence_transformers",
+  "embedding_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "corpus_path": "data/corpus/project"
+}
+```
+
+### Output
+
+```json
+{
+  "index_name": "phase1_chatbot_index",
+  "status": "loaded",
+  "reused": true,
+  "vector_backend": "faiss",
+  "embedding_provider": "sentence_transformers",
+  "embedding_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 }
 ```
 
@@ -150,6 +187,8 @@ Generate a grounded answer from a user query and retrieved context.
 ```json
 {
   "query": "What is the main conclusion of the document?",
+  "answering_provider": "qwen",
+  "answering_model": "qwen-plus",
   "retrieved_context": [
     {
       "document_name": "report.pdf",
@@ -166,6 +205,8 @@ Generate a grounded answer from a user query and retrieved context.
 ```json
 {
   "answer": "The main conclusion is that...",
+  "answering_provider": "qwen",
+  "answering_model": "qwen-plus",
   "grounded": true,
   "sources": [
     {
@@ -178,6 +219,13 @@ Generate a grounded answer from a user query and retrieved context.
   }
 }
 ```
+
+## Provider And Model Selection Notes
+
+- embedding provider and embedding model are selected in `Indexing & Review`
+- answering provider and answering model are selected in `Chat`
+- answering models should be filtered by the selected provider from a curated catalog
+- local answering providers are out of scope for the current phase
 
 ## Error Envelope
 
