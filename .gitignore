@@ -1,0 +1,9 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Generated local retrieval artifacts
+data/indexes/
+data/processed/
