@@ -10,6 +10,7 @@ langchain-text-splitters==1.1.1
 # LLM and tokenization
 openai==2.36.0
 tiktoken==0.12.0
+transformers==4.52.4
 
 # Vector store
 faiss-cpu==1.13.2
@@ -27,6 +28,7 @@ pandas==3.0.2
 
 # Optional local or alternative embeddings
 sentence-transformers==5.4.1
+torch==2.8.0
 
 # Demo interface
 streamlit==1.57.0
