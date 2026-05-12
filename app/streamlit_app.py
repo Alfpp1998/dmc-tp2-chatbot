@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 
 import streamlit as st
@@ -12,15 +13,22 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.chains.grounded_qa import answer_with_context
+from src.chat.session import (
+    SlidingWindowRateLimiter,
+    append_turn,
+    load_conversation,
+    new_session_id,
+    recent_history_lines,
+    save_conversation,
+)
 from src.config.catalogs import (
-    ANSWERING_MODELS,
     EMBEDDING_MODELS,
     available_answering_models_for,
-    answering_models_for,
     embedding_models_for,
 )
 from src.config.settings import (
     AnsweringSettings,
+    ChatExperienceSettings,
     IndexingSettings,
     RetrievalSettings,
     configured_answering_providers,
@@ -28,7 +36,7 @@ from src.config.settings import (
 from src.llms.factory import create_chat_provider
 from src.loaders.pdf_loader import load_pdf_directory
 from src.pipeline import build_or_load_index
-from src.retrievers.rag_retriever import retrieve_context
+from src.retrievers.rag_retriever import evidence_summary, retrieve_context
 from src.splitters.recursive import split_documents
 from src.vectorstores.faiss_store import index_is_valid, load_manifest
 
@@ -60,7 +68,38 @@ def render_sources(chunks) -> None:
             st.write(chunk.text)
 
 
+def ensure_chat_state(settings: ChatExperienceSettings) -> None:
+    if "chat_user_name" not in st.session_state:
+        st.session_state.chat_user_name = "demo-user"
+    if "chat_session_id" not in st.session_state:
+        st.session_state.chat_session_id = new_session_id()
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = load_conversation(
+            base_path=settings.conversations_path,
+            user_name=st.session_state.chat_user_name,
+            session_id=st.session_state.chat_session_id,
+        )
+    if "chat_rate_limiter" not in st.session_state:
+        st.session_state.chat_rate_limiter = SlidingWindowRateLimiter(
+            max_calls=settings.rate_limit_calls,
+            window_seconds=settings.rate_limit_window_seconds,
+        )
+
+
+def reset_chat_session(settings: ChatExperienceSettings, *, user_name: str) -> None:
+    st.session_state.chat_user_name = user_name
+    st.session_state.chat_session_id = new_session_id()
+    st.session_state.chat_history = []
+    st.session_state.chat_rate_limiter = SlidingWindowRateLimiter(
+        max_calls=settings.rate_limit_calls,
+        window_seconds=settings.rate_limit_window_seconds,
+    )
+
+
 st.title("AdAgent Copilot - RAG Foundations")
+
+chat_settings = ChatExperienceSettings()
+ensure_chat_state(chat_settings)
 
 tab_index, tab_chat = st.tabs(["Indexing & Review", "Chat"])
 
@@ -82,6 +121,13 @@ with tab_index:
     chunk_size = st.slider("Chunk size", min_value=300, max_value=2000, value=800, step=50)
     chunk_overlap = st.slider("Chunk overlap", min_value=0, max_value=400, value=120, step=20)
     top_k = st.slider("Top K", min_value=1, max_value=10, value=4, step=1)
+    min_similarity = st.slider(
+        "Minimum similarity for grounded answer",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.35,
+        step=0.05,
+    )
 
     indexing_settings = IndexingSettings(
         embedding_provider=embedding_provider,
@@ -89,7 +135,10 @@ with tab_index:
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,
     )
-    retrieval_settings = RetrievalSettings(top_k=top_k)
+    retrieval_settings = RetrievalSettings(
+        top_k=top_k,
+        min_similarity=min_similarity,
+    )
 
     col_a, col_b, col_c = st.columns(3)
     with col_a:
@@ -128,10 +177,48 @@ with tab_index:
                 review_query,
                 top_k=retrieval_settings.top_k,
             )
+        evidence = evidence_summary(chunks, retrieval_settings)
+        if evidence["has_sufficient_evidence"]:
+            st.success(
+                "Evidence looks strong enough for grounded answering. "
+                f"Max similarity: {evidence['max_similarity']:.3f}"
+            )
+        else:
+            max_similarity = evidence["max_similarity"]
+            max_label = "n/a" if max_similarity is None else f"{max_similarity:.3f}"
+            st.warning(
+                "Retrieved context is weak for answer generation. "
+                f"Max similarity: {max_label}. "
+                "The chat should fall back instead of guessing."
+            )
         render_sources(chunks)
 
 with tab_chat:
     st.subheader("Chat")
+
+    with st.sidebar:
+        st.subheader("Chat Session")
+        user_name = st.text_input("User name", value=st.session_state.chat_user_name)
+        col_new, col_clear = st.columns(2)
+        with col_new:
+            if st.button("New conversation"):
+                reset_chat_session(chat_settings, user_name=user_name)
+        with col_clear:
+            if st.button("Clear messages"):
+                st.session_state.chat_history = []
+                save_conversation(
+                    base_path=chat_settings.conversations_path,
+                    user_name=st.session_state.chat_user_name,
+                    session_id=st.session_state.chat_session_id,
+                    history=st.session_state.chat_history,
+                )
+        if user_name != st.session_state.chat_user_name:
+            reset_chat_session(chat_settings, user_name=user_name)
+        st.caption(f"Conversation ID: {st.session_state.chat_session_id}")
+        st.caption(
+            "Rate limit: "
+            f"{chat_settings.rate_limit_calls} calls / {chat_settings.rate_limit_window_seconds}s"
+        )
 
     available_providers = configured_answering_providers()
     if not available_providers:
@@ -145,36 +232,94 @@ with tab_chat:
         selected_model = answer_choices[selected_label]
 
     show_sources = st.checkbox("Show retrieved sources", value=True)
-    question = st.text_area(
-        "Pregunta",
-        value="Que canal recomiendan para una campana de awareness y por que?",
-        height=100,
-    )
+    for turn in st.session_state.chat_history:
+        role = "assistant" if turn.role == "assistant" else "user"
+        with st.chat_message(role):
+            st.write(turn.content)
 
-    if st.button("Ask", type="primary"):
+    prompt = st.chat_input("Escribe una pregunta grounded sobre el corpus indexado")
+    if prompt:
+        st.session_state.chat_history = append_turn(
+            st.session_state.chat_history,
+            role="user",
+            content=prompt,
+        )
+        with st.chat_message("user"):
+            st.write(prompt)
+
+        allowed, retry_after = st.session_state.chat_rate_limiter.allow(now_ts=time.time())
+        if not allowed:
+            assistant_text = (
+                f"Rate limit alcanzado para esta sesion. Espera {retry_after}s antes de intentar de nuevo."
+            )
+            st.session_state.chat_history = append_turn(
+                st.session_state.chat_history,
+                role="assistant",
+                content=assistant_text,
+            )
+            save_conversation(
+                base_path=chat_settings.conversations_path,
+                user_name=st.session_state.chat_user_name,
+                session_id=st.session_state.chat_session_id,
+                history=st.session_state.chat_history,
+            )
+            with st.chat_message("assistant"):
+                st.warning(assistant_text)
+            st.stop()
+
         with st.spinner("Retrieving context..."):
             current_index = IndexingSettings()
             vector_store = cached_index(current_index.model_dump(), False)
-            chunks = retrieve_context(vector_store, question, top_k=4)
+            chat_retrieval = RetrievalSettings(top_k=4)
+            chunks = retrieve_context(vector_store, prompt, top_k=chat_retrieval.top_k)
 
         if selected_provider and selected_model:
-            with st.spinner("Generating grounded answer..."):
-                answering = AnsweringSettings(
-                    provider=selected_provider,
-                    model=selected_model,
-                    show_sources=show_sources,
+            try:
+                with st.spinner("Generating grounded answer..."):
+                    answering = AnsweringSettings(
+                        provider=selected_provider,
+                        model=selected_model,
+                        show_sources=show_sources,
+                    )
+                    llm = create_chat_provider(
+                        answering.provider,
+                        model=answering.model,
+                        temperature=answering.temperature,
+                    )
+                    result = answer_with_context(
+                        query=prompt,
+                        chunks=chunks,
+                        llm=llm,
+                        retrieval=chat_retrieval,
+                        conversation_history=recent_history_lines(
+                            st.session_state.chat_history[:-1],
+                            max_turns=chat_settings.max_history_turns_for_prompt,
+                        ),
+                    )
+                assistant_text = result.answer
+            except Exception as exc:
+                assistant_text = (
+                    "La llamada al proveedor fallo. "
+                    f"Detalle: {exc}"
                 )
-                llm = create_chat_provider(
-                    answering.provider,
-                    model=answering.model,
-                    temperature=answering.temperature,
-                )
-                result = answer_with_context(query=question, chunks=chunks, llm=llm)
-            st.write(result.answer)
         else:
-            st.warning(
+            assistant_text = (
                 "Retrieval-only mode: select an available provider/model for generated answers."
             )
 
-        if show_sources:
-            render_sources(chunks)
+        st.session_state.chat_history = append_turn(
+            st.session_state.chat_history,
+            role="assistant",
+            content=assistant_text,
+        )
+        save_conversation(
+            base_path=chat_settings.conversations_path,
+            user_name=st.session_state.chat_user_name,
+            session_id=st.session_state.chat_session_id,
+            history=st.session_state.chat_history,
+        )
+
+        with st.chat_message("assistant"):
+            st.write(assistant_text)
+            if show_sources:
+                render_sources(chunks)

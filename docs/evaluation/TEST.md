@@ -22,6 +22,7 @@
 
 - [Owner: Shared] If the retriever finds weak or insufficient evidence, the system returns a bounded fallback instead of guessing.
 - [Owner: Shared] Unsupported requests such as live-web search are acknowledged as out of scope.
+- [Owner: Shared] The fallback decision should consider retrieval strength, not only the presence of any chunk.
 
 ## Demo Readiness
 
@@ -39,3 +40,16 @@ Create representative scenarios for:
 - source trace request
 - insufficient-context query
 - end-to-end indexing plus query demo
+
+## Recommended Metrics
+
+- retrieval `hit@k`
+- retrieval `recall@k`
+- maximum retrieved similarity
+- number of supporting chunks above the grounding threshold
+- groundedness score from manual review
+- source attribution accuracy
+- fallback precision and fallback recall
+- repeated-prompt consistency across `5` to `10` runs
+
+See [docs/evaluation/LLM_EVALUATION.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/evaluation/LLM_EVALUATION.md:1) for the evaluation design.

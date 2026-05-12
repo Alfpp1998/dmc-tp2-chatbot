@@ -7,6 +7,8 @@ from typing import Any
 
 from langchain_community.vectorstores import FAISS
 
+from src.config.settings import RetrievalSettings
+
 
 @dataclass(frozen=True)
 class RetrievedChunk:
@@ -40,3 +42,27 @@ def retrieve_context(vector_store: FAISS, query: str, *, top_k: int) -> list[Ret
         )
         for document, score in raw_results
     ]
+
+
+def evidence_summary(
+    chunks: list[RetrievedChunk],
+    settings: RetrievalSettings,
+) -> dict[str, float | int | bool | None]:
+    similarities = [chunk.similarity for chunk in chunks if chunk.similarity is not None]
+    supporting_chunks = sum(
+        1
+        for similarity in similarities
+        if similarity >= settings.min_similarity
+    )
+    max_similarity = max(similarities) if similarities else None
+    has_sufficient_evidence = (
+        bool(similarities)
+        and max_similarity is not None
+        and max_similarity >= settings.min_similarity
+        and supporting_chunks >= settings.min_supporting_chunks
+    )
+    return {
+        "has_sufficient_evidence": has_sufficient_evidence,
+        "max_similarity": max_similarity,
+        "supporting_chunks": supporting_chunks,
+    }

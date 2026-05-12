@@ -41,20 +41,28 @@ In the `Chat` panel, the user also selects an answering provider and then a prov
 The retriever converts the query into a vector and returns the top relevant chunks from the index.
 The retrieval result should include source metadata and similarity score when available.
 
-### 3. Ground The Prompt
+### 3. Apply Session Controls
+
+Before generation, the chat flow may apply:
+
+- recent conversation memory for the active session
+- a local rate limit for chat submissions
+
+### 4. Ground The Prompt
 
 The application builds a prompt containing:
 
 - the user question
+- recent conversation state when available
 - the retrieved passages
 - instructions that limit the answer to available context
 
-### 4. Generate Answer
+### 5. Generate Answer
 
-The selected API-based answering provider produces an answer from the grounded prompt.
+The selected answering provider produces an answer from the grounded prompt.
 If the retrieved evidence is weak or insufficient, the system should say so instead of inventing information.
 
-### 5. Return Response
+### 6. Return Response
 
 The final response should include:
 
@@ -72,5 +80,4 @@ The final response should include:
 ## Phase Boundary
 
 This flow covers the current RAG chatbot only.
-Advanced conversational state management, business analytics, and recommendation loops are deferred to future work.
-Local answering providers are also deferred to future work.
+Advanced conversational orchestration, production authentication, business analytics, and recommendation loops are deferred to future work.

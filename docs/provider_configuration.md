@@ -19,6 +19,9 @@ The `sentence-transformers` and `transformers` libraries automatically detect th
 
 ## Answering Providers
 
+The app now also applies a demo-level local rate limit per chat session before making provider calls.
+This is separate from vendor-side quotas or `429` responses.
+
 ### Qwen API
 
 ```text
