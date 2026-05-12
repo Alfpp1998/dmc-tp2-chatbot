@@ -49,7 +49,12 @@ The main app must separate:
 - an `Indexing & Review` area for corpus preparation and retrieval inspection
 - a `Chat` area for question answering over the indexed corpus
 
-### FR-11 User-Editable Demo Settings
+### FR-11 Chat-Oriented Interaction
+
+The `Chat` area must behave as a chat interface rather than as a set of unrelated one-off questions.
+It must present user and assistant turns in chronological order and allow continuing the same conversation across multiple turns.
+
+### FR-12 User-Editable Demo Settings
 
 The app must expose a limited set of user-editable settings for the demo flow, including:
 
@@ -67,26 +72,54 @@ The app must expose a limited set of user-editable settings for the demo flow, i
   - answering model selection within the selected provider
   - source visibility in responses
 
-### FR-12 Provider-Agnostic Answering
+### FR-13 Demo User Identity
+
+The app must support a simple demo-level user identity such as `user_name` in order to associate conversations with a user context.
+This requirement does not imply production authentication, password management, or access control.
+
+### FR-14 Conversation Memory
+
+The chat flow must keep recent conversation history per session and include a bounded recent-history view in the answer-generation prompt.
+Conversation memory must not modify the vector index or retrieval corpus.
+
+### FR-15 Conversation Persistence
+
+The app must persist chat conversations locally and allow resuming a previously saved conversation for the same demo user.
+
+### FR-16 Local Rate Limiting
+
+The chat flow must apply a local rate limit before provider generation calls.
+If the limit is exceeded, the app must show a clear user-facing message and skip the provider call.
+
+### FR-17 Retrieval Evidence Check
+
+The system must evaluate retrieval strength before answer generation.
+This decision should consider retrieval relevance, such as similarity thresholds or count of supporting chunks, instead of relying only on the presence of any retrieved chunk.
+
+### FR-18 Provider-Agnostic Answering
 
 The answer generation layer must support a provider-agnostic LLM interface so different API-based providers can be integrated without changing the retrieval architecture.
 
-### FR-13 Default Provider
+### FR-19 Default Provider
 
 The phase 1 default answering provider is `Qwen`.
 `OpenAI` should be supported as an additional provider when its API key is configured.
 
-### FR-14 Provider-Scoped Model Selection
+### FR-20 Provider-Scoped Model Selection
 
 The `Chat` interface must update the model selection list according to the selected answering provider.
 For the MVP, this list should come from a curated internal catalog rather than from live provider discovery.
 
-### FR-15 Embedding Provider Flexibility
+### FR-21 Provider Failure Handling
+
+Provider failures must be surfaced safely to the user without crashing the app flow.
+
+### FR-22 Embedding Provider Flexibility
 
 The indexing flow must support both API-based and local embedding providers.
 Local embedding options are allowed in the current phase even though local answering providers are not.
 
-### FR-16 Reindex On Embedding Change
+### FR-23 Reindex On Embedding Change
 
 Changing the embedding provider or embedding model must require reindexing, because those changes alter the vector representation of the corpus.
 
@@ -99,17 +132,20 @@ Changing the embedding provider or embedding model must require reindexing, beca
 - The project must include a README and an architecture description.
 - technical configuration such as API keys and internal defaults should stay outside the main user-facing controls
 - available answering providers should be determined from configured credentials or provider settings
-- local answering providers are out of scope for the current phase
+- simple demo-level conversation persistence is in scope for the current phase
+- simple local rate limiting is in scope for the current phase
 - local embedding providers are in scope for the current phase
 
 ## Non-Functional Requirements
 
 - grounded responses over open-ended generation
 - traceable source metadata
+- bounded conversation memory
+- clear rate-limit behavior
 - clear project structure
 - reproducible execution steps
 - demo-friendly behavior
 
 ## Acceptance Summary
 
-The system is acceptable when a user can load documents, index them, ask grounded questions, inspect or reference sources, and observe safe fallback behavior when evidence is insufficient.
+The system is acceptable when a user can load documents, index them, ask grounded questions through a chat interface, continue a saved conversation, inspect or reference sources, and observe safe fallback behavior when evidence is insufficient.

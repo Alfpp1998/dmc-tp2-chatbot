@@ -16,6 +16,7 @@ from src.chains.grounded_qa import answer_with_context
 from src.chat.session import (
     SlidingWindowRateLimiter,
     append_turn,
+    list_conversations,
     load_conversation,
     new_session_id,
     recent_history_lines,
@@ -90,6 +91,25 @@ def reset_chat_session(settings: ChatExperienceSettings, *, user_name: str) -> N
     st.session_state.chat_user_name = user_name
     st.session_state.chat_session_id = new_session_id()
     st.session_state.chat_history = []
+    st.session_state.chat_rate_limiter = SlidingWindowRateLimiter(
+        max_calls=settings.rate_limit_calls,
+        window_seconds=settings.rate_limit_window_seconds,
+    )
+
+
+def restore_chat_session(
+    settings: ChatExperienceSettings,
+    *,
+    user_name: str,
+    session_id: str,
+) -> None:
+    st.session_state.chat_user_name = user_name
+    st.session_state.chat_session_id = session_id
+    st.session_state.chat_history = load_conversation(
+        base_path=settings.conversations_path,
+        user_name=user_name,
+        session_id=session_id,
+    )
     st.session_state.chat_rate_limiter = SlidingWindowRateLimiter(
         max_calls=settings.rate_limit_calls,
         window_seconds=settings.rate_limit_window_seconds,
@@ -214,6 +234,27 @@ with tab_chat:
                 )
         if user_name != st.session_state.chat_user_name:
             reset_chat_session(chat_settings, user_name=user_name)
+        saved_conversations = list_conversations(
+            base_path=chat_settings.conversations_path,
+            user_name=st.session_state.chat_user_name,
+        )
+        if saved_conversations:
+            saved_labels = {
+                entry["session_id"]: f"{entry['session_id']} | {entry['preview']}"
+                for entry in saved_conversations
+            }
+            selected_saved_session = st.selectbox(
+                "Saved conversations",
+                list(saved_labels.keys()),
+                format_func=lambda session_id: saved_labels[session_id],
+                index=0,
+            )
+            if st.button("Open selected conversation"):
+                restore_chat_session(
+                    chat_settings,
+                    user_name=st.session_state.chat_user_name,
+                    session_id=selected_saved_session,
+                )
         st.caption(f"Conversation ID: {st.session_state.chat_session_id}")
         st.caption(
             "Rate limit: "
@@ -236,6 +277,15 @@ with tab_chat:
         role = "assistant" if turn.role == "assistant" else "user"
         with st.chat_message(role):
             st.write(turn.content)
+            if role == "assistant" and show_sources and turn.metadata:
+                stored_sources = turn.metadata.get("sources", [])
+                if stored_sources:
+                    with st.expander("Stored sources"):
+                        for index, source in enumerate(stored_sources, 1):
+                            st.caption(
+                                f"{index}. {source.get('source', '')} "
+                                f"(chunk_id={source.get('chunk_id', '')})"
+                            )
 
     prompt = st.chat_input("Escribe una pregunta grounded sobre el corpus indexado")
     if prompt:
@@ -297,20 +347,36 @@ with tab_chat:
                         ),
                     )
                 assistant_text = result.answer
+                assistant_metadata = {
+                    "sources": result.sources,
+                    "insufficient_context": result.insufficient_context,
+                    "selected_provider": selected_provider,
+                    "selected_model": selected_model,
+                }
             except Exception as exc:
                 assistant_text = (
                     "La llamada al proveedor fallo. "
                     f"Detalle: {exc}"
                 )
+                assistant_metadata = {
+                    "provider_error": str(exc),
+                    "selected_provider": selected_provider,
+                    "selected_model": selected_model,
+                }
         else:
             assistant_text = (
                 "Retrieval-only mode: select an available provider/model for generated answers."
             )
+            assistant_metadata = {
+                "selected_provider": selected_provider,
+                "selected_model": selected_model,
+            }
 
         st.session_state.chat_history = append_turn(
             st.session_state.chat_history,
             role="assistant",
             content=assistant_text,
+            metadata=assistant_metadata,
         )
         save_conversation(
             base_path=chat_settings.conversations_path,

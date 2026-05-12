@@ -113,6 +113,12 @@ Recommended evaluation dimensions:
 - fallback precision and recall
 - repeated-prompt consistency
 
+Runnable benchmark:
+
+```bash
+python scripts/evaluate_chatbot.py
+```
+
 ## Run The App
 
 Recommended environment: `Python 3.10+`

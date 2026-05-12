@@ -8,6 +8,7 @@ from collections import deque
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 from uuid import uuid4
 
 
@@ -16,6 +17,7 @@ class ChatTurn:
     role: str
     content: str
     created_at: str
+    metadata: dict[str, Any] | None = None
 
 
 def new_session_id() -> str:
@@ -31,8 +33,17 @@ def now_iso() -> str:
     return datetime.now(UTC).isoformat()
 
 
-def append_turn(history: list[ChatTurn], *, role: str, content: str) -> list[ChatTurn]:
-    return [*history, ChatTurn(role=role, content=content, created_at=now_iso())]
+def append_turn(
+    history: list[ChatTurn],
+    *,
+    role: str,
+    content: str,
+    metadata: dict[str, Any] | None = None,
+) -> list[ChatTurn]:
+    return [
+        *history,
+        ChatTurn(role=role, content=content, created_at=now_iso(), metadata=metadata),
+    ]
 
 
 def recent_history_lines(history: list[ChatTurn], *, max_turns: int = 6) -> list[str]:
@@ -74,6 +85,30 @@ def load_conversation(*, base_path: Path, user_name: str, session_id: str) -> li
     payload = json.loads(path.read_text(encoding="utf-8"))
     history = payload.get("history", [])
     return [ChatTurn(**turn) for turn in history]
+
+
+def list_conversations(*, base_path: Path, user_name: str) -> list[dict[str, str]]:
+    directory = conversation_dir(base_path, user_name)
+    if not directory.exists():
+        return []
+
+    conversations: list[dict[str, str]] = []
+    for path in sorted(directory.glob("*.json"), reverse=True):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        history = payload.get("history", [])
+        preview = ""
+        for turn in reversed(history):
+            if turn.get("role") == "user":
+                preview = str(turn.get("content", ""))[:80]
+                break
+        conversations.append(
+            {
+                "session_id": str(payload.get("session_id", path.stem)),
+                "updated_at": str(payload.get("updated_at", "")),
+                "preview": preview or "Conversation without user prompt",
+            }
+        )
+    return conversations
 
 
 class SlidingWindowRateLimiter:

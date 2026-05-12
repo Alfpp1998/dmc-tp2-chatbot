@@ -74,3 +74,21 @@ BAAI/bge-m3
 ```
 
 This is local, CPU-based, multilingual, and used with FAISS inner product search over normalized vectors.
+
+## Chat Session Settings
+
+The demo chat supports optional local configuration through `.env`:
+
+```text
+CHAT_CONVERSATIONS_PATH=
+CHAT_MAX_HISTORY_TURNS=6
+CHAT_RATE_LIMIT_CALLS=10
+CHAT_RATE_LIMIT_WINDOW_SECONDS=60
+```
+
+These values control:
+
+- where local conversations are stored
+- how many recent turns are injected into the prompt
+- how many chat submissions are allowed per window
+- the duration of the local rate-limit window in seconds

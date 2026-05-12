@@ -91,3 +91,31 @@ Maintain a small benchmark set with:
 - Keep at least one deterministic configuration for evaluation runs when possible.
 - Record provider, model, temperature, chunk size, chunk overlap, top `k`, and minimum similarity threshold in every evaluation report.
 - Treat embedding-model changes as a new retrieval baseline, not as directly comparable runs.
+
+## Runnable Evaluation Script
+
+The repository includes a benchmark runner at [scripts/evaluate_chatbot.py](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/scripts/evaluate_chatbot.py:1).
+
+Default benchmark cases live in [docs/evaluation/benchmark_cases.json](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/evaluation/benchmark_cases.json:1).
+
+### Retrieval-Only Evaluation
+
+```bash
+python scripts/evaluate_chatbot.py
+```
+
+This produces:
+
+- `data/processed/evaluation_report.json`
+- `data/processed/evaluation_report.csv`
+
+### Retrieval + Generation Evaluation
+
+```bash
+python scripts/evaluate_chatbot.py \
+  --provider openai \
+  --model gpt-4o-mini \
+  --repeats 5
+```
+
+You can replace `openai` and `gpt-4o-mini` with any configured provider/model pair supported by the app.
