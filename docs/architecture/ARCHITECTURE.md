@@ -17,12 +17,15 @@ flowchart TD
 
     subgraph Query_Flow[Query Flow]
         F[User Question] --> G[App / UI]
-        G --> H[LangChain Pipeline]
-        H --> I[Retriever]
-        I --> E
-        I --> J[Answer Chain]
-        J --> K[LLM]
-        K --> L[Grounded Answer + Sources]
+        G --> H[Session Memory + Rate Limiter]
+        H --> I[LangChain Pipeline]
+        I --> J[Retriever]
+        J --> E
+        J --> K[Evidence Check]
+        K -->|Weak evidence| L[Safe Fallback]
+        K -->|Sufficient evidence| M[Answer Chain]
+        M --> N[LLM]
+        N --> O[Grounded Answer + Sources]
     end
 ```
 
@@ -33,9 +36,12 @@ flowchart TD
 3. Chunks are embedded and stored in a local `FAISS` index with source metadata.
 4. If a valid persisted index already exists, the app should load and reuse it instead of rebuilding everything from zero.
 5. A user sends a question through the demo interface.
-6. The LangChain pipeline retrieves the most relevant chunks from `FAISS`.
-7. The answer chain builds a grounded prompt with the user query plus retrieved context.
-8. The LLM generates the final answer, ideally including source-aware traceability.
+6. The chat layer applies session memory and a demo-level rate limit before provider calls.
+7. The LangChain pipeline retrieves the most relevant chunks from `FAISS`.
+8. The pipeline checks whether retrieved evidence is strong enough for grounded answering.
+9. If evidence is weak or missing, the system should return a bounded fallback instead of guessing.
+10. If evidence is sufficient, the answer chain builds a grounded prompt with the user query, recent conversation state, and retrieved context.
+11. The LLM generates the final answer, ideally including source-aware traceability.
 
 ## Core Subsystems
 
@@ -74,6 +80,19 @@ flowchart TD
 - finds the most relevant chunks from the vector index
 - returns ranked context for answer generation
 
+### Evidence Check
+
+- evaluates whether retrieval results are strong enough to justify answer generation
+- should consider similarity score and the number of supporting chunks
+- acts as a guardrail against answering from weak retrieval evidence
+
+### Session Memory And Rate Limiter
+
+- keeps recent user and assistant turns for the active chat session
+- persists demo conversations by user and session id
+- applies a local sliding-window limit before LLM generation calls
+- improves UX without introducing production authentication complexity
+
 ### Answer Chain
 
 - receives the user question plus retrieved context
@@ -81,7 +100,7 @@ flowchart TD
 - should call a provider-agnostic LLM layer instead of a hardcoded vendor implementation
 - assumes `Qwen` as the default answering provider for phase 1
 - should allow additional providers such as `OpenAI` without changing the retrieval architecture
-- should use API-based providers only in the current phase
+- may use API-based or local providers depending on environment configuration
 - should explicitly handle weak or missing evidence
 
 ### Demo Interface

@@ -1,194 +1,162 @@
-# AdAgent Copilot - Fase 1 Chatbot LLM + RAG
+# AdAgent Copilot - Phase 1 RAG Chatbot
 
-## Descripción
+This repository contains a working phase 1 implementation of a document-grounded chatbot built with `Python + LangChain + RAG`.
 
-Este repositorio contiene la definición y preparación de la **primera fase** de un chatbot inteligente basado en `Python + LangChain + LLM + RAG`.
+Current capabilities:
 
-En esta etapa, el objetivo no es construir todavía el sistema grande de AdAgent Copilot orientado a decisiones de marketing, sino un **MVP funcional y demo-friendly** que pueda:
+- load a local PDF corpus from `data/corpus/knowledge_base/`
+- split documents into chunks with configurable `chunk_size` and `chunk_overlap`
+- generate embeddings with local `sentence-transformers` or `OpenAI`
+- build and persist a local `FAISS` index under `data/indexes/faiss/knowledge_base/`
+- reuse a valid persisted index through a manifest-based validity check
+- retrieve relevant chunks with source metadata
+- generate grounded answers through multiple provider adapters
+- trigger safe fallback when retrieval evidence is missing or weak
+- enforce a demo-level chat rate limit per session
+- persist conversation history per user and session
+- inspect indexing and retrieval from a `Streamlit` UI
 
-- cargar documentos
-- dividirlos en chunks
-- generar embeddings
-- indexarlos en un vector store
-- recuperar contexto relevante
-- responder preguntas de forma grounded
+## High-Level Architecture
 
-La estrategia actual de interacción considera:
+```mermaid
+flowchart TD
+    subgraph Indexing[Indexing Flow]
+        A[PDF corpus] --> B[Loader]
+        B --> C[Text splitter]
+        C --> D[Embedding model]
+        D --> E[FAISS index]
+    end
 
-- `Streamlit` como UI principal de demo
-- `notebook` como interfaz de revisión step by step
-
-La app principal debería dividirse en dos áreas:
-
-- `Indexing & Review` para preparar el corpus, configurar parámetros e inspeccionar retrieval
-- `Chat` para conversar con el asistente sobre el índice ya construido
-
-La decisión actual de arquitectura asume `FAISS` como vector store para simplificar el desarrollo local y la demo.
-Para generación de respuestas, la arquitectura está pensada como agnóstica de proveedor:
-
-- `Qwen` como proveedor por defecto en esta fase
-- `OpenAI` como proveedor adicional compatible
-
-## Objetivo de esta fase
-
-El proyecto actual busca cumplir con los lineamientos de la primera entrega del curso:
-
-- uso de `LangChain`
-- uso de `LLM + RAG`
-- embeddings e indexación semántica
-- recuperación de información desde documentos
-- generación de respuestas naturales
-- manejo básico de alucinaciones y respuestas fuera de contexto
-
-## Alcance actual
-
-### Incluido
-
-- chatbot sobre documentos
-- pipeline de indexación y retrieval
-- arquitectura modular
-- corpus curado y pequeño para evaluación manual
-- documentación técnica para implementación
-
-### Fuera de alcance por ahora
-
-- `Rasa`
-- `DuckDB`
-- analytics SQL
-- recomendaciones de campañas
-- multi-armed bandits
-- multi-agent orchestration
-- integraciones live con plataformas de ads
-
-## Arquitectura resumida
-
-Flujo principal:
-
-`Usuario -> App/UI -> LangChain Pipeline -> Retriever -> LLM -> Respuesta`
-
-Flujos internos:
-
-1. **Indexación**
-   Documentos -> Loader -> Splitter -> Embeddings -> `FAISS`
-
-2. **Consulta**
-   Pregunta -> Retriever -> Contexto relevante -> Prompt grounded -> LLM -> Respuesta con fuentes
-
-Interfaz prevista:
-
-- `Streamlit` para la demo final
-- `notebook` para inspeccionar indexación, retrieval y generación paso a paso
-
-Configuraciones editables recomendadas en la UI:
-
-En `Indexing & Review`:
-
-- selección de corpus o carpeta
-- selección de proveedor de embeddings
-- selección de modelo de embeddings según el proveedor elegido
-- acción de indexar o reindexar
-- `chunk_size`
-- `chunk_overlap`
-- `top_k`
-- visualización de fuentes o chunks recuperados
-
-En `Chat`:
-
-- selección de proveedor de answering entre los disponibles
-- selección de modelo dentro del proveedor elegido
-- visualización de fuentes en la respuesta
-
-Las configuraciones técnicas más sensibles, como API keys o defaults internos, deberían mantenerse fuera de la UI principal.
-La recomendación es usar `Streamlit` para capturar estos inputs y `Pydantic` para validarlos antes de ejecutar el pipeline.
-Los proveedores visibles en la UI deberían depender de qué credenciales estén configuradas en el entorno.
-La lista de modelos del chat debería actualizarse según el proveedor seleccionado y venir de un catálogo curado del proyecto.
-Para embeddings, se pueden ofrecer tanto opciones API-based como modelos locales.
-
-La arquitectura detallada está en [docs/architecture/ARCHITECTURE.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/architecture/ARCHITECTURE.md:1).
-
-## Requerimientos funcionales
-
-El sistema debe poder:
-
-- cargar documentos desde una carpeta o conjunto definido
-- dividir documentos en chunks adecuados para retrieval
-- generar embeddings
-- construir un índice vectorial
-- recuperar fragmentos relevantes
-- generar respuestas basadas en contexto recuperado
-- responder con fallback seguro cuando no haya evidencia suficiente
-
-La especificación completa está en [docs/specs/REQUIREMENTS.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/specs/REQUIREMENTS.md:1).
-
-## Corpus sugerido
-
-La estrategia recomendada para el corpus inicial tiene 3 capas:
-
-- documentos propios del proyecto
-- documentación oficial de Google Ads, Meta e IAB
-- papers opcionales sobre RAG y bandits
-
-La propuesta concreta está en [docs/corpus_candidates.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/corpus_candidates.md:1).
-
-Convención sugerida de almacenamiento:
-
-```text
-data/
-  corpus/
-    project/
-    official_sources/
-    papers/
-  indexes/
-    faiss/
+    subgraph Query[Query Flow]
+        F[User question] --> G[Streamlit UI]
+        G --> H[Retriever]
+        H --> E
+        G --> R[Session memory + rate limiter]
+        H --> I[Evidence check]
+        I -->|weak evidence| J[Safe fallback]
+        I -->|strong enough| K[Grounded answer chain]
+        K --> L[LLM provider]
+        L --> M[Answer with sources]
+    end
 ```
 
-Comportamiento esperado del índice:
+More detail is in [docs/architecture/ARCHITECTURE.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/architecture/ARCHITECTURE.md:1) and [docs/architecture/data_flow.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/architecture/data_flow.md:1).
 
-- si el índice `FAISS` ya existe y sigue siendo válido, la app debe reutilizarlo
-- solo debe reindexar cuando cambie el corpus o parámetros clave del proceso de indexación
-- cambiar el proveedor o modelo de embeddings debe forzar reindexación
+## Current Repository State
 
-## Documentación clave
+Implemented now:
 
-- Guía general: [docs/AGENTS.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/AGENTS.md:1)
-- Producto: [docs/steering/product.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/steering/product.md:1)
-- Alcance: [docs/steering/scope.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/steering/scope.md:1)
-- Decisiones técnicas: [docs/steering/decisions.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/steering/decisions.md:1)
-- Arquitectura: [docs/architecture/ARCHITECTURE.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/architecture/ARCHITECTURE.md:1)
-- Flujo de datos: [docs/architecture/data_flow.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/architecture/data_flow.md:1)
-- Contratos: [docs/specs/tool_contracts.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/specs/tool_contracts.md:1)
-- Prompts: [docs/specs/llm_prompts.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/specs/llm_prompts.md:1)
-- Evaluación: [docs/evaluation/TEST.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/evaluation/TEST.md:1)
-- Estructura recomendada del proyecto: [docs/project_structure.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/project_structure.md:1)
+- `Streamlit` demo in [app/streamlit_app.py](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/app/streamlit_app.py:1)
+- indexing pipeline in [src/pipeline.py](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/src/pipeline.py:1)
+- PDF loading, chunking, embedding factory, retrieval, FAISS persistence, and grounded answer chain in `src/`
+- CLI helpers in `scripts/`
+- technical documentation in `docs/`
 
-## Referencia base
+Partially implemented or still documentation-first:
 
-En [example/TallerLCH](</Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/example/TallerLCH>) hay un ejemplo básico de búsqueda vectorial con `LangChain`.
+- automated evaluation suite with repeatable metrics
+- broader guardrail policies beyond retrieval-strength fallback
+- production deployment concerns
 
-Ese ejemplo sirve como referencia técnica inicial, pero la intención de este repo es construir algo:
+## Core Components
 
-- más modular
-- mejor documentado
-- más fácil de evaluar
-- más claro para demo y presentación final
+- `app/streamlit_app.py`: UI with `Indexing & Review` and `Chat`
+- `src/chat/`: session memory, persistence, and rate limiting helpers
+- `src/loaders/`: PDF ingestion
+- `src/splitters/`: chunking
+- `src/embeddings/`: embedding provider factory
+- `src/vectorstores/`: FAISS build, load, manifest validity
+- `src/retrievers/`: retrieval and evidence summary
+- `src/chains/`: grounded answering and safe fallback
+- `src/llms/`: provider adapters for `OpenAI`, `Qwen`, `Ollama`, and local Hugging Face chat models
+- `scripts/index_knowledge_base.py`: build or refresh the local index
+- `scripts/query_knowledge_base.py`: inspect retrieval results from the command line
 
-## Estado del repositorio
+## Guardrails
 
-Actualmente el repositorio está enfocado en:
+The current guardrail strategy is intentionally simple and retrieval-centered:
 
-- definir la arquitectura
-- fijar el alcance del MVP
-- curar el corpus inicial
-- documentar contratos y criterios de aceptación
+- answers are prompted to use only retrieved context
+- if no chunks are retrieved, the system returns fallback
+- if retrieved chunks exist but evidence is weak, the system also returns fallback
+- evidence strength is currently based on:
+  - maximum retrieved similarity
+  - number of retrieved chunks above the configured similarity threshold
+- chat requests are limited per session to reduce accidental API overuse
 
-Todavía no representa una implementación final del chatbot.
+## Chat Experience
 
-## Próximos pasos sugeridos
+The current `Streamlit` chat experience includes:
 
-1. Seleccionar el corpus inicial definitivo.
-2. Crear la estructura de ingestión y chunking.
-3. Implementar embeddings e índice `FAISS`.
-4. Implementar retrieval con `LangChain`.
-5. Conectar el answer chain con el LLM.
-6. Construir la demo en `Streamlit` y el notebook de revisión.
-7. Validar con los casos definidos en `docs/evaluation/TEST.md`.
+- simple demo-level user registration through a `user name` field
+- persistent conversation history stored under `data/conversations/`
+- prompt memory from recent conversation turns
+- `st.chat_message` and `st.chat_input` based UI instead of isolated one-off questions
+- per-session rate limiting for chat submissions
+
+Relevant files:
+
+- [src/chains/grounded_qa.py](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/src/chains/grounded_qa.py:1)
+- [src/retrievers/rag_retriever.py](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/src/retrievers/rag_retriever.py:1)
+- [docs/specs/llm_prompts.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/specs/llm_prompts.md:1)
+
+## Evaluation
+
+Acceptance scenarios are documented in [docs/evaluation/TEST.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/evaluation/TEST.md:1).
+The proposed metric design for this phase is documented in [docs/evaluation/LLM_EVALUATION.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/evaluation/LLM_EVALUATION.md:1).
+
+Recommended evaluation dimensions:
+
+- retrieval quality: `hit@k`, `recall@k`, max similarity
+- groundedness: answer faithfulness to retrieved passages
+- source attribution accuracy
+- fallback precision and recall
+- repeated-prompt consistency
+
+Runnable benchmark:
+
+```bash
+python scripts/evaluate_chatbot.py
+```
+
+## Run The App
+
+Recommended environment: `Python 3.10+`
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+streamlit run app/streamlit_app.py
+```
+
+Then open the local URL shown by `Streamlit`, usually `http://localhost:8501`.
+
+## Provider Notes
+
+Embeddings:
+
+- default local embedding model: `BAAI/bge-m3`
+- alternative local embedding model: `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`
+- optional API embedding model: `text-embedding-3-small`
+
+Answering providers:
+
+- `qwen` through DashScope-compatible API
+- `openai`
+- `ollama`
+- local Hugging Face chat models
+
+Provider configuration is documented in [docs/provider_configuration.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/provider_configuration.md:1).
+
+## Key Docs
+
+- [docs/AGENTS.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/AGENTS.md:1)
+- [docs/steering/product.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/steering/product.md:1)
+- [docs/steering/scope.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/steering/scope.md:1)
+- [docs/steering/decisions.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/steering/decisions.md:1)
+- [docs/architecture/ARCHITECTURE.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/architecture/ARCHITECTURE.md:1)
+- [docs/specs/REQUIREMENTS.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/specs/REQUIREMENTS.md:1)
+- [docs/specs/llm_prompts.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/specs/llm_prompts.md:1)
+- [docs/evaluation/TEST.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/evaluation/TEST.md:1)

@@ -1,0 +1,38 @@
+{
+  "cases": [
+    {
+      "case_id": "fashion-channel-comparison",
+      "question": "Cual canal genera mejor ROI entre Instagram y Twitter para una campana de marketing?",
+      "expected_sources": [
+        "A01_Instagram_vs_Twitter_¿Cuál_Canal_Genera.pdf"
+      ],
+      "expects_fallback": false,
+      "tags": ["retrieval", "factual", "comparison"]
+    },
+    {
+      "case_id": "kpi-glossary",
+      "question": "Que es el CTR y como se interpreta dentro de una campana?",
+      "expected_sources": [
+        "A19_Diccionario_de_Métricas_Glosario_de_KPI.pdf"
+      ],
+      "expects_fallback": false,
+      "tags": ["retrieval", "definition"]
+    },
+    {
+      "case_id": "budget-allocation",
+      "question": "Como distribuir el presupuesto entre canales de una campana digital?",
+      "expected_sources": [
+        "A09_Cómo_Distribuir_el_Presupuesto_en_una_Ca.pdf"
+      ],
+      "expects_fallback": false,
+      "tags": ["retrieval", "guidance"]
+    },
+    {
+      "case_id": "out-of-scope-weather",
+      "question": "Cual sera el clima en Lima manana?",
+      "expected_sources": [],
+      "expects_fallback": true,
+      "tags": ["fallback", "out_of_scope"]
+    }
+  ]
+}
