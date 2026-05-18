@@ -42,14 +42,14 @@ flowchart TD
     end
 ```
 
-Más detalle está en [docs/architecture/ARCHITECTURE.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/architecture/ARCHITECTURE.md:1) y [docs/architecture/data_flow.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/architecture/data_flow.md:1).
+Más detalle está en [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) y [docs/architecture/data_flow.md](docs/architecture/data_flow.md).
 
 ## Estado actual del repositorio
 
 Implementado ahora:
 
-- demo de `Streamlit` en [app/streamlit_app.py](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/app/streamlit_app.py:1)
-- pipeline de indexación en [src/pipeline.py](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/src/pipeline.py:1)
+- demo de `Streamlit` en [app/streamlit_app.py](app/streamlit_app.py)
+- pipeline de indexación en [src/pipeline.py](src/pipeline.py)
 - carga de PDF, chunking, fábrica de embeddings, retrieval, persistencia FAISS y cadena de respuesta grounded en `src/`
 - helpers de CLI en `scripts/`
 - documentación técnica en `docs/`
@@ -98,14 +98,14 @@ La experiencia actual de chat en `Streamlit` incluye:
 
 Archivos relevantes:
 
-- [src/chains/grounded_qa.py](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/src/chains/grounded_qa.py:1)
-- [src/retrievers/rag_retriever.py](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/src/retrievers/rag_retriever.py:1)
-- [docs/specs/llm_prompts.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/specs/llm_prompts.md:1)
+- [src/chains/grounded_qa.py](src/chains/grounded_qa.py)
+- [src/retrievers/rag_retriever.py](src/retrievers/rag_retriever.py)
+- [docs/specs/llm_prompts.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/_prompts.md)
 
 ## Evaluación
 
-Los escenarios de aceptación están documentados en [docs/evaluation/TEST.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/evaluation/TEST.md:1).
-El diseño propuesto de métricas para esta fase está documentado en [docs/evaluation/LLM_EVALUATION.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/evaluation/LLM_EVALUATION.md:1).
+Los escenarios de aceptación están documentados en [docs/evaluation/TEST.md](docs/evaluation/TEST.md).
+El diseño propuesto de métricas para esta fase está documentado en [docs/evaluation/LLM_EVALUATION.md](docs/evaluation/LLM_EVALUATION.md).
 
 Dimensiones de evaluación recomendadas:
 
@@ -220,15 +220,15 @@ Proveedores de respuesta:
 - `ollama`
 - modelos chat locales de Hugging Face
 
-La configuración de proveedores está documentada en [docs/provider_configuration.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/provider_configuration.md:1).
+La configuración de proveedores está documentada en [docs/provider_configuration.md](docs/provider_configuration.md).
 
 ## Documentos clave
 
-- [docs/AGENTS.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/AGENTS.md:1)
-- [docs/steering/product.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/steering/product.md:1)
-- [docs/steering/scope.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/steering/scope.md:1)
-- [docs/steering/decisions.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/steering/decisions.md:1)
-- [docs/architecture/ARCHITECTURE.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/architecture/ARCHITECTURE.md:1)
-- [docs/specs/REQUIREMENTS.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/specs/REQUIREMENTS.md:1)
-- [docs/specs/llm_prompts.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/specs/llm_prompts.md:1)
-- [docs/evaluation/TEST.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/evaluation/TEST.md:1)
+- [docs/AGENTS.md](docs\AGENTS.md)
+- [docs/steering/product.md](docs/steering/product.md)
+- [docs/steering/scope.md](docs/steering/scope.md)
+- [docs/steering/decisions.md](docs/steering/decisions.md:1)
+- [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)
+- [docs/specs/REQUIREMENTS.md](docs/specs/REQUIREMENTS.md)
+- [docs/specs/llm_prompts.md](docs/specs/llm_prompts.md:1)
+- [docs/evaluation/TEST.md](docs/evaluation/TEST.md)
