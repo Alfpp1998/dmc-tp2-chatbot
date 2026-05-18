@@ -34,6 +34,8 @@ class IndexingSettings(BaseModel):
 
 class RetrievalSettings(BaseModel):
     top_k: int = Field(default=4, ge=1, le=12)
+    min_similarity: float = Field(default=0.35, ge=-1.0, le=1.0)
+    min_supporting_chunks: int = Field(default=1, ge=1, le=12)
 
 
 class AnsweringSettings(BaseModel):
@@ -41,6 +43,27 @@ class AnsweringSettings(BaseModel):
     model: str = default_answering_model().model
     temperature: float = Field(default=0.1, ge=0.0, le=1.0)
     show_sources: bool = True
+
+
+class ChatExperienceSettings(BaseModel):
+    conversations_path: Path = Path(
+        os.getenv("CHAT_CONVERSATIONS_PATH", PROJECT_ROOT / "data" / "conversations")
+    )
+    max_history_turns_for_prompt: int = Field(
+        default=int(os.getenv("CHAT_MAX_HISTORY_TURNS", "6")),
+        ge=0,
+        le=20,
+    )
+    rate_limit_calls: int = Field(
+        default=int(os.getenv("CHAT_RATE_LIMIT_CALLS", "10")),
+        ge=1,
+        le=200,
+    )
+    rate_limit_window_seconds: int = Field(
+        default=int(os.getenv("CHAT_RATE_LIMIT_WINDOW_SECONDS", "60")),
+        ge=1,
+        le=3600,
+    )
 
 
 def configured_answering_providers() -> list[str]:

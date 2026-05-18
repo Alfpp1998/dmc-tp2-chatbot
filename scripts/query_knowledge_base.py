@@ -12,7 +12,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.config.settings import IndexingSettings, RetrievalSettings
 from src.pipeline import build_or_load_index
-from src.retrievers.rag_retriever import retrieve_context
+from src.retrievers.rag_retriever import evidence_summary, retrieve_context
 
 
 def parse_args() -> argparse.Namespace:
@@ -28,6 +28,13 @@ def main() -> None:
     retrieval = RetrievalSettings(top_k=args.top_k)
     vector_store = build_or_load_index(settings)
     results = retrieve_context(vector_store, args.query, top_k=retrieval.top_k)
+    evidence = evidence_summary(results, retrieval)
+    print(
+        "Evidence summary: "
+        f"has_sufficient_evidence={evidence['has_sufficient_evidence']} "
+        f"max_similarity={evidence['max_similarity']} "
+        f"supporting_chunks={evidence['supporting_chunks']}"
+    )
 
     for index, result in enumerate(results, 1):
         raw_score = f"{result.score:.4f}" if result.score is not None else "n/a"

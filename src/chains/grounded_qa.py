@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from src.config.settings import RetrievalSettings
 from src.llms.base import ChatProvider
 from src.prompts.templates import (
     GROUNDING_SYSTEM_PROMPT,
     GUIDELINE_STYLE_PROMPT,
     format_retrieved_context,
 )
-from src.retrievers.rag_retriever import RetrievedChunk
+from src.retrievers.rag_retriever import RetrievedChunk, evidence_summary
 
 
 @dataclass(frozen=True)
@@ -25,10 +26,26 @@ def answer_with_context(
     query: str,
     chunks: list[RetrievedChunk],
     llm: ChatProvider,
+    retrieval: RetrievalSettings | None = None,
+    conversation_history: list[str] | None = None,
 ) -> GroundedAnswer:
+    retrieval = retrieval or RetrievalSettings()
+    conversation_history = conversation_history or []
+
     if not chunks:
         return GroundedAnswer(
             answer="Los documentos indexados no contienen suficiente informacion para responder.",
+            sources=[],
+            insufficient_context=True,
+        )
+
+    evidence = evidence_summary(chunks, retrieval)
+    if not evidence["has_sufficient_evidence"]:
+        return GroundedAnswer(
+            answer=(
+                "Los documentos recuperados no contienen evidencia suficientemente clara "
+                "para responder con seguridad. Reformula la pregunta o agrega mas documentos."
+            ),
             sources=[],
             insufficient_context=True,
         )
@@ -50,7 +67,11 @@ def answer_with_context(
             for source, chunk in zip(sources, chunks)
         ]
     )
-    user_prompt = f"""Pregunta del usuario:
+    history_block = ""
+    if conversation_history:
+        history_block = "Historial reciente de la conversacion:\n" + "\n".join(conversation_history) + "\n\n"
+
+    user_prompt = f"""{history_block}Pregunta del usuario:
 {query}
 
 Contexto recuperado:

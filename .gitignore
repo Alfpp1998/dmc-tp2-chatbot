@@ -7,3 +7,4 @@ __pycache__/
 # Generated local retrieval artifacts
 data/indexes/
 data/processed/
+data/conversations/

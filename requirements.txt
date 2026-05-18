@@ -29,6 +29,7 @@ pandas==3.0.2
 
 # Optional local or alternative embeddings
 sentence-transformers==5.4.1
+torch==2.8.0
 
 # Demo interface
 streamlit==1.57.0
