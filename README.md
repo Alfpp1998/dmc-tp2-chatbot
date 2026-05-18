@@ -1,156 +1,228 @@
-# AdAgent Copilot - Phase 1 RAG Chatbot
+# AdAgent Copilot - Fase 1 Chatbot RAG
 
-This repository contains a working phase 1 implementation of a document-grounded chatbot built with `Python + LangChain + RAG`.
+Este repositorio contiene una implementación funcional de la fase 1 de un chatbot grounded en documentos construido con `Python + LangChain + RAG`.
 
-Current capabilities:
+Para la guía de como instalar y correr el sistema vaya a: [Instalación y ejecución](#ejecutar-la-app)
 
-- load a local PDF corpus from `data/corpus/knowledge_base/`
-- split documents into chunks with configurable `chunk_size` and `chunk_overlap`
-- generate embeddings with local `sentence-transformers` or `OpenAI`
-- build and persist a local `FAISS` index under `data/indexes/faiss/knowledge_base/`
-- reuse a valid persisted index through a manifest-based validity check
-- retrieve relevant chunks with source metadata
-- generate grounded answers through multiple provider adapters
-- trigger safe fallback when retrieval evidence is missing or weak
-- enforce a demo-level chat rate limit per session
-- persist conversation history per user and session
-- inspect indexing and retrieval from a `Streamlit` UI
+Capacidades actuales:
 
-## High-Level Architecture
+- cargar un corpus local de PDFs desde `data/corpus/knowledge_base/`
+- dividir documentos en chunks con `chunk_size` y `chunk_overlap` configurables
+- generar embeddings con `sentence-transformers` local o `OpenAI`
+- construir y persistir un índice local `FAISS` en `data/indexes/faiss/knowledge_base/`
+- reutilizar un índice persistido válido mediante verificación con manifest
+- recuperar chunks relevantes con metadatos de fuente
+- generar respuestas grounded mediante múltiples adaptadores de proveedor
+- activar un fallback seguro cuando la evidencia de retrieval es débil o inexistente
+- aplicar límite de tasa de chat de nivel demo por sesión
+- persistir el historial de conversación por usuario y sesión
+- inspeccionar indexación y retrieval desde una UI de `Streamlit`
+
+## Arquitectura de alto nivel
 
 ```mermaid
 flowchart TD
     subgraph Indexing[Indexing Flow]
-        A[PDF corpus] --> B[Loader]
-        B --> C[Text splitter]
-        C --> D[Embedding model]
-        D --> E[FAISS index]
+        A[Corpus PDF] --> B[Cargador]
+        B --> C[Divisor de texto]
+        C --> D[Modelo de embeddings]
+        D --> E[Índice FAISS]
     end
 
     subgraph Query[Query Flow]
-        F[User question] --> G[Streamlit UI]
-        G --> H[Retriever]
+        F[Pregunta del usuario] --> G[UI Streamlit]
+        G --> H[Recuperador]
         H --> E
-        G --> R[Session memory + rate limiter]
-        H --> I[Evidence check]
-        I -->|weak evidence| J[Safe fallback]
-        I -->|strong enough| K[Grounded answer chain]
-        K --> L[LLM provider]
-        L --> M[Answer with sources]
+        G --> R[Memoria de sesión + limitador]
+        H --> I[Verificación de evidencia]
+        I -->|evidencia débil| J[Fallback seguro]
+        I -->|evidencia suficiente| K[Cadena de respuesta grounded]
+        K --> L[Proveedor LLM]
+        L --> M[Respuesta con fuentes]
     end
 ```
 
-More detail is in [docs/architecture/ARCHITECTURE.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/architecture/ARCHITECTURE.md:1) and [docs/architecture/data_flow.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/architecture/data_flow.md:1).
+Más detalle está en [docs/architecture/ARCHITECTURE.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/architecture/ARCHITECTURE.md:1) y [docs/architecture/data_flow.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/architecture/data_flow.md:1).
 
-## Current Repository State
+## Estado actual del repositorio
 
-Implemented now:
+Implementado ahora:
 
-- `Streamlit` demo in [app/streamlit_app.py](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/app/streamlit_app.py:1)
-- indexing pipeline in [src/pipeline.py](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/src/pipeline.py:1)
-- PDF loading, chunking, embedding factory, retrieval, FAISS persistence, and grounded answer chain in `src/`
-- CLI helpers in `scripts/`
-- technical documentation in `docs/`
+- demo de `Streamlit` en [app/streamlit_app.py](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/app/streamlit_app.py:1)
+- pipeline de indexación en [src/pipeline.py](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/src/pipeline.py:1)
+- carga de PDF, chunking, fábrica de embeddings, retrieval, persistencia FAISS y cadena de respuesta grounded en `src/`
+- helpers de CLI en `scripts/`
+- documentación técnica en `docs/`
 
-Partially implemented or still documentation-first:
+Parcialmente implementado o todavía centrado en documentación:
 
-- automated evaluation suite with repeatable metrics
-- broader guardrail policies beyond retrieval-strength fallback
-- production deployment concerns
+- suite de evaluación automatizada con métricas reproducibles
+- políticas de guardrail más amplias más allá del fallback por fuerza de retrieval
+- preocupaciones de despliegue a producción
 
-## Core Components
+## Componentes principales
 
-- `app/streamlit_app.py`: UI with `Indexing & Review` and `Chat`
-- `src/chat/`: session memory, persistence, and rate limiting helpers
-- `src/loaders/`: PDF ingestion
+- `app/streamlit_app.py`: UI con `Indexing & Review` y `Chat`
+- `src/chat/`: memoria de sesión, persistencia y helpers de limitación de tasa
+- `src/loaders/`: ingestión de PDF
 - `src/splitters/`: chunking
-- `src/embeddings/`: embedding provider factory
-- `src/vectorstores/`: FAISS build, load, manifest validity
-- `src/retrievers/`: retrieval and evidence summary
-- `src/chains/`: grounded answering and safe fallback
-- `src/llms/`: provider adapters for `OpenAI`, `Qwen`, `Ollama`, and local Hugging Face chat models
-- `scripts/index_knowledge_base.py`: build or refresh the local index
-- `scripts/query_knowledge_base.py`: inspect retrieval results from the command line
+- `src/embeddings/`: fábrica de proveedores de embeddings
+- `src/vectorstores/`: construcción, carga y validez de manifest de FAISS
+- `src/retrievers/`: recuperación y resumen de evidencia
+- `src/chains/`: respuesta grounded y fallback seguro
+- `src/llms/`: adaptadores de proveedor para `OpenAI`, `Qwen`, `Ollama` y modelos chat locales de Hugging Face
+- `scripts/index_knowledge_base.py`: construir o refrescar el índice local
+- `scripts/query_knowledge_base.py`: inspeccionar resultados de retrieval desde la línea de comandos
 
 ## Guardrails
 
-The current guardrail strategy is intentionally simple and retrieval-centered:
+La estrategia actual de guardrails es intencionalmente simple y centrada en retrieval:
 
-- answers are prompted to use only retrieved context
-- if no chunks are retrieved, the system returns fallback
-- if retrieved chunks exist but evidence is weak, the system also returns fallback
-- evidence strength is currently based on:
-  - maximum retrieved similarity
-  - number of retrieved chunks above the configured similarity threshold
-- chat requests are limited per session to reduce accidental API overuse
+- las respuestas se piden que usen solo el contexto recuperado
+- si no se recuperan chunks, el sistema devuelve fallback
+- si hay chunks recuperados pero la evidencia es débil, también devuelve fallback
+- la fuerza de la evidencia se basa actualmente en:
+  - similitud máxima recuperada
+  - número de chunks recuperados por encima del umbral de similitud configurado
+- las solicitudes de chat se limitan por sesión para reducir el uso accidental de la API
 
-## Chat Experience
+## Experiencia de chat
 
-The current `Streamlit` chat experience includes:
+La experiencia actual de chat en `Streamlit` incluye:
 
-- simple demo-level user registration through a `user name` field
-- persistent conversation history stored under `data/conversations/`
-- prompt memory from recent conversation turns
-- `st.chat_message` and `st.chat_input` based UI instead of isolated one-off questions
-- per-session rate limiting for chat submissions
+- registro simple a nivel demo mediante un campo `user name`
+- historial de conversación persistente almacenado en `data/conversations/`
+- memoria de prompt de los turnos recientes de conversación
+- UI basada en `st.chat_message` y `st.chat_input` en lugar de preguntas aisladas
+- limitación de tasa por sesión para envíos de chat
 
-Relevant files:
+Archivos relevantes:
 
 - [src/chains/grounded_qa.py](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/src/chains/grounded_qa.py:1)
 - [src/retrievers/rag_retriever.py](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/src/retrievers/rag_retriever.py:1)
 - [docs/specs/llm_prompts.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/specs/llm_prompts.md:1)
 
-## Evaluation
+## Evaluación
 
-Acceptance scenarios are documented in [docs/evaluation/TEST.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/evaluation/TEST.md:1).
-The proposed metric design for this phase is documented in [docs/evaluation/LLM_EVALUATION.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/evaluation/LLM_EVALUATION.md:1).
+Los escenarios de aceptación están documentados en [docs/evaluation/TEST.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/evaluation/TEST.md:1).
+El diseño propuesto de métricas para esta fase está documentado en [docs/evaluation/LLM_EVALUATION.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/evaluation/LLM_EVALUATION.md:1).
 
-Recommended evaluation dimensions:
+Dimensiones de evaluación recomendadas:
 
-- retrieval quality: `hit@k`, `recall@k`, max similarity
-- groundedness: answer faithfulness to retrieved passages
-- source attribution accuracy
-- fallback precision and recall
-- repeated-prompt consistency
+- calidad de retrieval: `hit@k`, `recall@k`, similitud máxima
+- groundedness: fidelidad de la respuesta a los pasajes recuperados
+- precisión de atribución de fuentes
+- precisión y recall de fallback
+- consistencia con prompts repetidos
 
-Runnable benchmark:
+Benchmark ejecutable:
 
 ```bash
 python scripts/evaluate_chatbot.py
 ```
 
-## Run The App
+## Ejecutar la app
 
-Recommended environment: `Python 3.10+`
+Entorno recomendado: `Python 3.10+`
+
+### 1. Crear el entorno virtual
+
+Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+macOS o Linux:
 
 ```bash
 python3.11 -m venv .venv
 source .venv/bin/activate
+python -m pip install --upgrade pip
 pip install -r requirements.txt
+```
+
+### 2. Configurar variables de entorno
+
+Copie el ejemplo:
+
+```bash
 cp .env.example .env
+```
+
+En Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Edite `.env` según los proveedores que necesite. Ejemplo:
+
+```text
+HF_TOKEN=
+QWEN_API_KEY=
+DASHSCOPE_API_KEY=
+QWEN_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+OPENAI_API_KEY=
+OLLAMA_BASE_URL=http://localhost:11434
+```
+
+### 3. Generar o actualizar el índice
+
+```bash
+python scripts/index_knowledge_base.py --force
+```
+
+Opcional:
+
+```bash
+python scripts/index_knowledge_base.py --force --chunk-size 800 --chunk-overlap 120
+```
+
+### 4. Probar retrieval desde la CLI
+
+```bash
+python scripts/query_knowledge_base.py "¿Qué canal recomiendan para brand awareness?" --top-k 3
+```
+
+### 5. Ejecutar la app Streamlit
+
+```bash
 streamlit run app/streamlit_app.py
 ```
 
-Then open the local URL shown by `Streamlit`, usually `http://localhost:8501`.
+Abra la URL local que indique Streamlit, normalmente `http://localhost:8501`.
 
-## Provider Notes
+### Flujo recomendado
+
+1. Use `Indexing & Review` para preparar el corpus y construir o cargar el índice.
+2. Seleccione proveedor y modelo de embeddings.
+3. Verifique que los PDFs se carguen correctamente.
+4. Construya o cargue el índice FAISS.
+5. Cambie a `Chat`, seleccione proveedor y modelo de respuesta.
+6. Haga preguntas y revise las respuestas con sus fuentes.
+
+## Notas sobre proveedores
 
 Embeddings:
 
-- default local embedding model: `BAAI/bge-m3`
-- alternative local embedding model: `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`
-- optional API embedding model: `text-embedding-3-small`
+- modelo local predeterminado de embeddings: `BAAI/bge-m3`
+- modelo local alternativo de embeddings: `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`
+- modelo opcional de embeddings por API: `text-embedding-3-small`
 
-Answering providers:
+Proveedores de respuesta:
 
-- `qwen` through DashScope-compatible API
+- `qwen` a través de la API compatible con DashScope
 - `openai`
 - `ollama`
-- local Hugging Face chat models
+- modelos chat locales de Hugging Face
 
-Provider configuration is documented in [docs/provider_configuration.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/provider_configuration.md:1).
+La configuración de proveedores está documentada en [docs/provider_configuration.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/provider_configuration.md:1).
 
-## Key Docs
+## Documentos clave
 
 - [docs/AGENTS.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/AGENTS.md:1)
 - [docs/steering/product.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/docs/steering/product.md:1)
