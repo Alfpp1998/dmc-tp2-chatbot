@@ -100,7 +100,7 @@ Archivos relevantes:
 
 - [src/chains/grounded_qa.py](src/chains/grounded_qa.py)
 - [src/retrievers/rag_retriever.py](src/retrievers/rag_retriever.py)
-- [docs/specs/llm_prompts.md](/Users/chperezpelaez/Documents/Github/dmc-tp2-chatbot/_prompts.md)
+- [docs/specs/llm_prompts.md](docs/specs/llm_prompts.md)
 
 ## Evaluación
 
@@ -224,11 +224,11 @@ La configuración de proveedores está documentada en [docs/provider_configurati
 
 ## Documentos clave
 
-- [docs/AGENTS.md](docs\AGENTS.md)
+- [docs/AGENTS.md](docs/AGENTS.md)
 - [docs/steering/product.md](docs/steering/product.md)
 - [docs/steering/scope.md](docs/steering/scope.md)
-- [docs/steering/decisions.md](docs/steering/decisions.md:1)
+- [docs/steering/decisions.md](docs/steering/decisions.md)
 - [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md)
 - [docs/specs/REQUIREMENTS.md](docs/specs/REQUIREMENTS.md)
-- [docs/specs/llm_prompts.md](docs/specs/llm_prompts.md:1)
+- [docs/specs/llm_prompts.md](docs/specs/llm_prompts.md)
 - [docs/evaluation/TEST.md](docs/evaluation/TEST.md)
